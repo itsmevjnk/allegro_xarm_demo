@@ -70,7 +70,11 @@
   <!-- Load the robot description directly from the xacro file. (NOTE: store it
        in two parameter names.) -->
   <param name="robot_description"
+<<<<<<< HEAD
          command="$(find xacro)/xacro.py
+=======
+         command="$(find xacro)/xacro
+>>>>>>> ec0b0bb... fixing xacro
                   $(find allegro_hand_description)/allegro_hand_description_$(arg HAND).xacro"/>
 
   <!-- Allegro Hand controller and communication node. -->
