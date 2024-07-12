@@ -1,0 +1,72 @@
+<launch>
+    <!-- TODO: add RViz visualisation -->
+
+    <!-- Allegro Hand config -->
+    <arg name="HAND" default="right"/>
+    <arg name="HAND_AUTO_CAN" default="true"/>
+    <arg name="HAND_CAN_DEVICE" default="/dev/pcanusb1"/>
+    <arg name="HAND_PARAMS_DIR" default="$(find allegro_hand_parameters)"/>
+    <arg name="HAND_ZEROS" default="$(arg HAND_PARAMS_DIR)/zero.yaml"/>
+    <arg name="HAND_CAN_POLLING" default="true"/>
+    <arg name="HAND_JSP_GUI" default="false"/>
+
+    <!-- xArm config -->
+    <arg name="ARM_IP" default="192.168.1.209"/>
+    <arg name="ARM_REPORT_TYPE" default="normal"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro $(find allegro_hand_description)/allegro_hand_description_$(arg HAND).xacro"/>
+
+    <!-- xArm bringup -->
+    <include file="$(find xarm_bringup)/launch/xarm7_server.launch">
+        <arg name="robot_ip" value="$(arg ARM_IP)"/>
+        <arg name="report_type" value="$(arg ARM_REPORT_TYPE)"/>
+    </include>
+
+    <!-- Allegro Hand controller and communication node (we'll use grasp for now) -->
+    <node name="allegro_hand"
+        pkg="allegro_hand_controllers"
+        type="allegro_node_grasp"
+        output="screen"
+        clear_params="true"
+        respawn="false" respawn_delay="2"
+        args="$(arg HAND_CAN_POLLING)">
+        <!-- no topic remappings -->
+
+        <rosparam file="$(arg HAND_ZEROS)" command="load"/>
+        <rosparam file="$(arg HAND_PARAMS_DIR)/gains_pd.yaml" command="load"/>
+        <rosparam file="$(arg HAND_PARAMS_DIR)/gains_velSat.yaml" command="load"/>
+        <rosparam file="$(arg HAND_PARAMS_DIR)/initial_position.yaml" command="load"/>
+
+        <!-- set CAN channel automatically -->
+        <param name="/comm/CAN_CH" value="$(arg HAND_CAN_DEVICE)" unless="$(arg HAND_AUTO_CAN)"/>
+        <param name="/comm/CAN_CH" command="$(find allegro_hand_description)/scripts/detect_pcan.py" if="$(arg HAND_AUTO_CAN)"/>
+
+        <param name="/hand_info/which_hand" value="$(arg HAND)"/>
+    </node>
+
+    <!-- hand joint state publisher GUI (TODO: find a use for this) -->
+    <node name="hand_joint_states"
+        pkg="joint_state_publisher"
+        type="joint_state_publisher"
+        if="$(arg HAND_JSP_GUI)">
+        <param name="use_gui" value="true"/>
+    </node>
+
+    <!-- hand joint state to joint transforms -->
+    <node name="hand_js2tf"
+        pkg="robot_state_publisher"
+        output="screen"
+        type="robot_state_publisher"/>
+
+    <!-- hand controller node -->
+    <node name="hand_controller"
+        pkg="arm_controller"
+        type="hand.py"
+        output="screen"/>
+
+    <!-- xArm controller node -->
+    <node name="xarm_controller"
+        pkg="arm_controller"
+        type="xarm.py"
+        output="screen"/>
+</launch>

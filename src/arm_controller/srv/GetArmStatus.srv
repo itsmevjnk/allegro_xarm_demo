@@ -1,0 +1,14 @@
+# request:
+#   new         bool    whether to wait for a new telemetry message to be available
+bool new
+
+---
+
+# response:
+#   success     bool        whether the request is successful (will return false if arm_controller hasn't received the first telemetry packet)
+#   message     string      description of request success/failure status
+#   status      ArmStatus   the arm's status (see ArmStatus.msg)
+
+bool success
+string message
+ArmStatus status

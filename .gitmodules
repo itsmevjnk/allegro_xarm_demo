@@ -1,3 +1,6 @@
 [submodule "src/xarm_ros"]
 	path = src/xarm_ros
 	url = https://github.com/xArm-Developer/xarm_ros.git
+[submodule "src/arm_controller/scripts/Gamepad"]
+	path = src/arm_controller/scripts/Gamepad
+	url = https://github.com/piborg/Gamepad.git

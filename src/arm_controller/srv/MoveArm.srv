@@ -1,0 +1,15 @@
+# request:
+#   pos     float32[3]  the absolute/relative coordinate to move the arm towards (in mm) - X, Y and Z respectively
+#   orient  float32[3]  the absolute/relative orientation to move the arm towards (in rad) - roll (RX), pitch (RY) and yaw (RZ) respectively
+
+float32[3] pos
+float32[3] orient
+
+---
+
+# response:
+#   success     bool    whether the request is successful (in which case the value field is valid)
+#   message     string  description of request success/failure status
+
+bool success
+string message

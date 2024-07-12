@@ -1,0 +1,13 @@
+# request:
+#   value       bool    the value to set
+
+bool value
+
+---
+
+# response:
+#   success     bool    whether the request is successful (in which case the value field is valid)
+#   message     string  description of request success/failure status
+
+bool success
+string message
