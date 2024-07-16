@@ -56,6 +56,13 @@
             pkg="robot_state_publisher"
             output="screen"
             type="robot_state_publisher"/>
+        
+        <!-- hand controller node -->
+        <node name="hand_controller"
+            pkg="arm_controller"
+            type="hand.py"
+            output="screen"
+            required="true"/>
     </group>
 
     <group if="$(arg ARM_CTL)">
@@ -64,11 +71,12 @@
             <arg name="robot_ip" value="$(arg ARM_IP)"/>
             <arg name="report_type" value="$(arg ARM_REPORT_TYPE)"/>
         </include>
-        
-        <!-- hand controller node -->
-        <node name="hand_controller"
+
+        <!-- arm controller node -->
+        <node name="xarm_controller"
             pkg="arm_controller"
-            type="hand.py"
-            output="screen"/>
+            type="xarm.py"
+            output="screen"/
+            required="true">
     </group>
 </launch>

@@ -5,6 +5,8 @@ import rosgraph
 
 from std_msgs.msg import String
 from std_srvs.srv import Trigger, TriggerResponse
+from sensor_msgs.msg import JointState
+from arm_controller.msg import *
 
 class AllegroHandController:
             
@@ -49,6 +51,12 @@ class AllegroHandController:
         self.lib_cmd.publish(String('envelop'))
 
         if req is not None: return TriggerResponse(True, '')
+    
+    def joint_states_cb(self, data):
+        self.jointpos_pub.publish(JointPos(
+            data.header,
+            data.position
+        ))
 
     def __init__(self, wait_rate = 10):
         rospy.loginfo('AllegroHand: setting up publisher')
@@ -72,6 +80,10 @@ class AllegroHandController:
         self.srv_pinch_idx = rospy.Service('/hand/pinch_idx', Trigger, self.pinch_idx)
         self.srv_pinch_mid = rospy.Service('/hand/pinch_mid', Trigger, self.pinch_mid)
         self.srv_envelop = rospy.Service('/hand/envelop', Trigger, self.envelop)
+
+        rospy.loginfo('AllegroHand: setting up telemetry')
+        self.jointpos_pub = rospy.Publisher('/hand/joint_pos', JointPos, queue_size=10)
+        self.joint_states = rospy.Subscriber('/allegroHand/joint_states', JointState, self.joint_states_cb)
 
         rospy.loginfo('AllegroHand: ready')
 
