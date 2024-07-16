@@ -76,7 +76,7 @@
         <node name="xarm_controller"
             pkg="arm_controller"
             type="xarm.py"
-            output="screen"/
-            required="true">
+            output="screen"
+            required="true"/>
     </group>
 </launch>
