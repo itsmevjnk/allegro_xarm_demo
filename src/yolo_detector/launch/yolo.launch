@@ -1,0 +1,29 @@
+<launch>
+    <arg name="CAM_ID" default="0"/>
+    <arg name="CAM_RESOLUTION" default=""/>
+    <arg name="CLASSIFIERS"/>
+    <arg name="CONF_THRESHOLD" default="0.71"/>
+    <arg name="AREA_THRESHOLD" default="0.0"/>
+    <arg name="ENTER_MIN" default="1.0"/>
+    <arg name="EXIT_MAX" default="0.5"/>
+    <arg name="SHOW_CAM" default="true"/>
+    <arg name="REQUIRED" default="true"/>
+    <arg name="NAME" default="yolo_detector"/>
+    <arg name="BOUNDARY" default="0.0,0.0,1.0,1.0"/> <!-- top_left_x, top_left_y, bottom_right_x, bottom_right_y (normalised) -->
+
+    <node name="$(arg NAME)"
+        pkg="yolo_detector"
+        type="main.py"
+        output="screen"
+        required="$(arg REQUIRED)">
+        <param name="CAM_ID" value="$(arg CAM_ID)"/>
+        <param name="CAM_RESOLUTION" value="$(arg CAM_RESOLUTION)"/>
+        <param name="CLASSIFIERS" value="$(arg CLASSIFIERS)"/>
+        <param name="CONF_THRESHOLD" value="$(arg CONF_THRESHOLD)"/>
+        <param name="AREA_THRESHOLD" value="$(arg AREA_THRESHOLD)"/>
+        <param name="BOUNDARY" value="$(arg BOUNDARY)"/>
+        <param name="ENTER_MIN" value="$(arg ENTER_MIN)"/>
+        <param name="EXIT_MAX" value="$(arg EXIT_MAX)"/>
+        <param name="SHOW_CAM" value="$(arg SHOW_CAM)"/>
+    </node>
+</launch>
