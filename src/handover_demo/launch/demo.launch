@@ -11,6 +11,24 @@
     <arg name="ARM_IP" default="192.168.1.209"/>
     <arg name="ARM_REPORT_TYPE" default="normal"/>
 
+    <!-- human detection config -->
+    <arg name="HUMAN_CAM_ID" default="5"/>
+    <arg name="HUMAN_CONF_THRESHOLD" default="0.71"/>
+    <arg name="HUMAN_AREA_THRESHOLD" default="0.125"/>
+    <arg name="HUMAN_ENTER_MIN" default="1.0"/>
+    <arg name="HUMAN_EXIT_MAX" default="0.5"/>
+    <arg name="HUMAN_BOUNDS" default="0.0,0.0,1.0,1.0"/>
+
+    <!-- bottle detection config -->
+    <arg name="BOTTLE_CAM_ID" default="3"/>
+    <arg name="BOTTLE_CONF_THRESHOLD" default="0.45"/>
+    <arg name="BOTTLE_AREA_THRESHOLD" default="0.0"/>
+    <arg name="BOTTLE_ENTER_MIN" default="0.25"/>
+    <arg name="BOTTLE_EXIT_MAX" default="0.25"/>
+    <arg name="BOTTLE_BOUNDS" default="0.3,0.0,0.6,1.0"/>
+
+    <arg name="SHOW_CAM" default="false"/>
+
     <include file="$(find arm_controller)/launch/arm_bringup.launch">
         <arg name="HAND" value="$(arg HAND)"/>
         <arg name="HAND_AUTO_CAN" value="$(arg HAND_AUTO_CAN)"/>
@@ -24,7 +42,31 @@
 
     <node name="handover_demo"
         pkg="handover_demo"
-        type="main.py"
+        type="auto.py"
         output="screen"
         required="true"/>
+    
+    <include file="$(find yolo_detector)/launch/yolo.launch">
+        <arg name="NAME" value="human_detector"/>
+        <arg name="CAM_ID" value="$(arg HUMAN_CAM_ID)"/>
+        <arg name="CLASSIFIERS" value="person"/>
+        <arg name="CONF_THRESHOLD" value="$(arg HUMAN_CONF_THRESHOLD)"/>
+        <arg name="AREA_THRESHOLD" value="$(arg HUMAN_AREA_THRESHOLD)"/>
+        <arg name="ENTER_MIN" value="$(arg HUMAN_ENTER_MIN)"/>
+        <arg name="EXIT_MAX" value="$(arg HUMAN_EXIT_MAX)"/>
+        <arg name="SHOW_CAM" value="$(arg SHOW_CAM)"/>
+        <arg name="BOUNDARY" value="$(arg HUMAN_BOUNDS)"/>
+    </include>
+
+    <include file="$(find yolo_detector)/launch/yolo.launch">
+        <arg name="NAME" value="bottle_detector"/>
+        <arg name="CAM_ID" value="$(arg BOTTLE_CAM_ID)"/>
+        <arg name="CLASSIFIERS" value="bottle"/>
+        <arg name="CONF_THRESHOLD" value="$(arg BOTTLE_CONF_THRESHOLD)"/>
+        <arg name="AREA_THRESHOLD" value="$(arg BOTTLE_AREA_THRESHOLD)"/>
+        <arg name="ENTER_MIN" value="$(arg BOTTLE_ENTER_MIN)"/>
+        <arg name="EXIT_MAX" value="$(arg BOTTLE_EXIT_MAX)"/>
+        <arg name="SHOW_CAM" value="$(arg SHOW_CAM)"/>
+        <arg name="BOUNDARY" value="$(arg BOTTLE_BOUNDS)"/>
+    </include>
 </launch>
