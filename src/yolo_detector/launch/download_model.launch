@@ -1,0 +1,8 @@
+<launch>
+    <node name="yolo_dl_model"
+        pkg="yolo_detector"
+        type="download_model.py"
+        output="screen"
+        required="true">
+    </node>
+</launch>

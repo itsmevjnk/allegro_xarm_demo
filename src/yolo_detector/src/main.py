@@ -8,7 +8,8 @@ from std_msgs.msg import Header
 from yolo_detector.msg import Event
 from yolo_detector.srv import GetPresence, GetPresenceResponse
 
-YOLO_MODEL = '/home/itsmevjnk/yolov8n.pt'
+import rospkg
+YOLO_MODEL=rospkg.RosPack().get_path('yolo_detector') + '/yolov8n.pt'
 
 class YOLODetector:
     def __init__(self, namespace: str, cam_id: int, classifiers: 'list[str]', cam_resolution: 'str | None' = None, detect_bounds: 'list[float]' = [0,0,1,1], conf_thres: float = 0.6, area_thres: float = 0.0, enter_min: float = 1.0, exit_max: float = 0.5, show_cam: bool = False):
