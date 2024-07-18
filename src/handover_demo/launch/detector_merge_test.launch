@@ -1,16 +1,4 @@
 <launch>
-    <!-- Allegro Hand config -->
-    <arg name="HAND" default="right"/>
-    <arg name="HAND_AUTO_CAN" default="true"/>
-    <arg name="HAND_CAN_DEVICE" default="/dev/pcanusb1"/>
-    <arg name="HAND_PARAMS_DIR" default="$(find allegro_hand_parameters)"/>
-    <arg name="HAND_ZEROS" default="$(arg HAND_PARAMS_DIR)/zero.yaml"/>
-    <arg name="HAND_CAN_POLLING" default="true"/>
-
-    <!-- xArm config -->
-    <arg name="ARM_IP" default="192.168.1.209"/>
-    <arg name="ARM_REPORT_TYPE" default="normal"/>
-
     <!-- human detection config -->
     <arg name="HUMAN_CAM_ID"/>
     <arg name="HUMAN_CONF_THRESHOLD" default="0.71"/>
@@ -28,23 +16,6 @@
     <arg name="BOTTLE_BOUNDS" default="0.25,0.0,0.4,1.0"/>
 
     <arg name="SHOW_CAM" default="false"/>
-
-    <include file="$(find arm_controller)/launch/arm_bringup.launch">
-        <arg name="HAND" value="$(arg HAND)"/>
-        <arg name="HAND_AUTO_CAN" value="$(arg HAND_AUTO_CAN)"/>
-        <arg name="HAND_CAN_DEVICE" value="$(arg HAND_CAN_DEVICE)"/>
-        <arg name="HAND_PARAMS_DIR" value="$(arg HAND_PARAMS_DIR)"/>
-        <arg name="HAND_ZEROS" value="$(arg HAND_ZEROS)"/>
-        <arg name="HAND_CAN_POLLING" value="$(arg HAND_CAN_POLLING)"/>
-        <arg name="ARM_IP" value="$(arg ARM_IP)"/>
-        <arg name="ARM_REPORT_TYPE" value="$(arg ARM_REPORT_TYPE)"/>
-    </include>
-
-    <node name="handover_demo"
-        pkg="handover_demo"
-        type="auto.py"
-        output="screen"
-        required="true"/>
     
     <include file="$(find yolo_detector)/launch/yolo.launch">
         <arg name="NAME" value="human_detector"/>
