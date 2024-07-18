@@ -43,8 +43,8 @@ class _GetchWindows:
 
 getch = _Getch()
 
-ARM_RETRACT = [-1.3946762084960938,0.8651095628738403,0.3751215934753418,1.3067330121994019,1.829132080078125,1.2459126710891724,2.1973795890808105]
-ARM_EXTEND = [-2.4859461784362793,0.8843361139297485,0.16265948116779327,1.871404767036438,1.6797127723693848,1.2428677082061768,2.9693477153778076]
+ARM_RETRACT = [-1.078160285949707, 0.7780254483222961, 0.35401591658592224, 1.198759913444519, 2.0698864459991455, 1.1360431909561157, 2.2165064811706543]
+ARM_EXTEND = [-1.6134812831878662, 0.6652030944824219, 0.21972931921482086, 1.4806538820266724, 3.1512298583984375, 1.1353720426559448, 2.2165064811706543]
 
 HAND_MONITOR_DELAY = 0.5
 HAND_DPOS_MAX = 0.05
@@ -52,12 +52,14 @@ HAND_DPOS_MAX = 0.05
 class HandoverDemo:
     def __init__(self):
         rospy.loginfo('waiting for services')
+        rospy.wait_for_service('/arm/home')
         rospy.wait_for_service('/arm/move_joint')
         rospy.wait_for_service('/arm/intr_move')
         rospy.wait_for_service('/hand/ready')
         rospy.wait_for_service('/hand/envelop')
 
         rospy.loginfo('setting up service proxies')
+        self.spx_home = rospy.ServiceProxy('/arm/home', Trigger)
         self.spx_move_joint = rospy.ServiceProxy('/arm/move_joint', MoveArmJoints)
         self.spx_hand_release = rospy.ServiceProxy('/hand/ready', Trigger)
         self.spx_hand_grasp = rospy.ServiceProxy('/hand/envelop', Trigger)
@@ -72,13 +74,15 @@ class HandoverDemo:
         rospy.ServiceProxy('/arm/set_blocking', arm_controller.srv.SetBool)(False)
 
         rospy.loginfo('moving to initial position')
-        self.arm_retract()
+        self.arm_home()
         self.hand_release()
 
-        rospy.loginfo('available commands: E = extend, R = retract, D = release bottle, G = grab bottle, Q = quit')
+        rospy.loginfo('available commands: H = go to home position, E = extend, R = retract, D = release bottle, G = grab bottle, Q = quit')
         while not rospy.is_shutdown():
             c = getch().lower()
-            if c == 'e':
+            if c == 'h':
+                self.arm_home()
+            elif c == 'e':
                 self.arm_extend()
             elif c == 'r':
                 self.arm_retract()
@@ -88,6 +92,11 @@ class HandoverDemo:
                 self.hand_grasp()
             elif c == 'q':
                 break
+
+    def arm_home(self):
+        rospy.loginfo('moving to home position')
+        self.spx_interrupt_move()
+        self.spx_home()
 
     def arm_extend(self):
         rospy.loginfo('extending arm')
