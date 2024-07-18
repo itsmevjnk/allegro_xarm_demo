@@ -12,7 +12,7 @@
     <arg name="ARM_REPORT_TYPE" default="normal"/>
 
     <!-- human detection config -->
-    <arg name="HUMAN_CAM_ID" default="5"/>
+    <arg name="HUMAN_CAM_ID"/>
     <arg name="HUMAN_CONF_THRESHOLD" default="0.71"/>
     <arg name="HUMAN_AREA_THRESHOLD" default="0.125"/>
     <arg name="HUMAN_ENTER_MIN" default="1.0"/>
@@ -20,7 +20,7 @@
     <arg name="HUMAN_BOUNDS" default="0.0,0.0,1.0,1.0"/>
 
     <!-- bottle detection config -->
-    <arg name="BOTTLE_CAM_ID" default="3"/>
+    <arg name="BOTTLE_CAM_ID"/>
     <arg name="BOTTLE_CONF_THRESHOLD" default="0.45"/>
     <arg name="BOTTLE_AREA_THRESHOLD" default="0.0"/>
     <arg name="BOTTLE_ENTER_MIN" default="0.25"/>
