@@ -164,6 +164,7 @@ catkin_install_python(PROGRAMS
   src/teleop.py
   src/auto.py
   src/detector_merge.py
+  src/actuator.py
   # src/getch.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -34,11 +34,7 @@ class HandoverDemo:
         rospy.loginfo('releasing bottle')
         self.hand_min_pos = None
         self.spx_hand_release()
-
-    def hand_start_monitor(self, event=None):
-        rospy.loginfo('enabling yank monitoring')
-        self.hand_min_pos = self.hand_last_pos
-
+        
     def hand_grasp(self):
         rospy.loginfo('grabbing bottle')
         self.spx_hand_grasp()
@@ -46,10 +42,12 @@ class HandoverDemo:
     
     def yank_cb(self, data):
         rospy.loginfo('bottle yanking detected, releasing bottle and going back home')
+        self.handover = False
         self.spx_home()
     
     def detect_cb(self, data):
-        handover = data.human.presence and data.bottle.presence # whether we would be in a handover state
+        if self.handover: handover = data.human.presence # if we're handing over the bottle, only the human needs to be present
+        else: handover = data.human.presence and data.bottle.presence # otherwise, both the bottle and the human need to be present (so we can grab the bottle)
         if self.handover != handover: # state update
             rospy.loginfo(f'handover state updated to {handover}')
             self.handover = handover

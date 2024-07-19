@@ -5,7 +5,7 @@ import rospkg
 
 import yaml
 from queue import Queue # thread-safe queue for passing commands to the spinner
-from enum import Enum
+from enum import IntEnum
 
 from arm_controller.srv import SetBool,SetHand,MoveArmJoints
 from arm_controller.msg import ArmStatus,JointPos
@@ -13,16 +13,16 @@ from std_srvs.srv import Trigger, TriggerResponse
 from std_msgs.msg import Empty, String
 
 # arm actuation mode
-class ArmMode(Enum):
+class ArmMode(IntEnum):
     IDLE = 0
     MOVE_STAGED = 1
     MOVING = 2
 
-HAND_MOVE_DELAY = 0.5 # delay between issuing command and movement finishing (for hand)
-ARM_STAGING_TIMEOUT = 0.4 # arm movement staging timeout (note that the report rate is 5Hz)
+HAND_MOVE_DELAY = 0.2 # delay between issuing command and movement finishing (for hand)
+ARM_STAGING_TIMEOUT = 0.3 # arm movement staging timeout (note that the report rate is 5Hz)
 
 # internal commands
-class InternalCmd(Enum):
+class InternalCmd(IntEnum):
     HOME = 0
     HANDOVER = 1
 
@@ -32,17 +32,19 @@ class InternalCmd(Enum):
 #  1. hand in ready pose, move arm to pickup pose
 #  2. hand in grab pose (+wait)
 #  3. move arm to handover pose
-# if step 3 is interrupted:
+# if step 3 is interrupted or we're in idle handover:
 #  R. move arm to pickup pose
-class Steps(Enum):
-    IDLE = 0
+class Steps(IntEnum):
+    IDLE_HOME = 0
 
-    HANDOVER_1 = 1
-    HANDOVER_2 = 2
-    HANDOVER_3 = 3
-    HANDOVER_R = 4
+    HANDOVER_1 = 10
+    HANDOVER_2 = 11
+    HANDOVER_3 = 12
+    HANDOVER_R = 13
+    IDLE_HANDOVER = 14
+
     
-    HOME = 10
+    HOME = 20
 
 SPIN_RATE = 1000 # spinner thread's rate (in Hz)
 
@@ -97,7 +99,8 @@ class HandoverActuator:
                 cmd = self.cmds.get()
                 if cmd == InternalCmd.HOME:
                     if self.step != Steps.HANDOVER_R and self.step != Steps.HOME: # we don't want to interrupt ourselves reverting handover or repeat home commands
-                        self.step = Steps.HOME if self.step != Steps.HANDOVER_3 else Steps.HANDOVER_R
+                        # self.step = Steps.HOME if self.step != Steps.HANDOVER_3 and self.step != Steps.IDLE_HANDOVER else Steps.HANDOVER_R
+                        self.step = Steps.HANDOVER_R if self.step == Steps.HANDOVER_3 or (self.step == Steps.IDLE_HANDOVER and self.hand_min_pos is not None) else Steps.HOME
                         self.step_first = True
                 elif cmd == InternalCmd.HANDOVER:
                     if self.step >= Steps.HANDOVER_1 and self.step <= Steps.HANDOVER_3: # already doing handover
@@ -110,7 +113,7 @@ class HandoverActuator:
                         self.step_first = True
             
             # do our thing
-            if self.step == Steps.IDLE: # do nothing
+            if self.step == Steps.IDLE_HOME or self.step == Steps.IDLE_HANDOVER: # do nothing
                 pass
             elif self.step == Steps.HOME: # go to home pose
                 self.step_home()
@@ -128,7 +131,7 @@ class HandoverActuator:
     def hand_open_cb(self, event):
         rospy.loginfo('hand open, moving arm back to home')
         self.move_arm(self.config['home']['arm'])
-        self.step = Steps.IDLE # we're pretty much done here
+        self.step = Steps.IDLE_HOME # we're pretty much done here
     
     def step_handover(self):
         if self.step == Steps.HANDOVER_1:
@@ -142,19 +145,21 @@ class HandoverActuator:
         elif self.step == Steps.HANDOVER_2:
             if self.step_first:
                 self.step_first = False
+                self.hand_cmd.publish(String(self.config[self.pose]['hand']))
                 rospy.Timer(rospy.Duration(HAND_MOVE_DELAY), self.hand_closed_cb, True) # the callback does the transition
         elif self.step == Steps.HANDOVER_3:
             if self.step_first:
                 self.step_first = False
                 self.move_arm(self.config[self.pose]['handover'])
             elif self.arm_state == ArmMode.IDLE:
-                self.step = Steps.IDLE
+                self.step = Steps.IDLE_HANDOVER
         elif self.step == Steps.HANDOVER_R:
             if self.step_first:
                 self.step_first = False
                 self.move_arm(self.config[self.pose]['pickup'])
             elif self.arm_state == ArmMode.IDLE:
                 self.step = Steps.HOME
+                self.step_first = True
 
     def hand_closed_cb(self, event):
         rospy.loginfo('hand closed, enabling yank monitoring')
@@ -167,11 +172,13 @@ class HandoverActuator:
         self.hand_last_pos = sum(pos) / len(pos) # NOTE: does Python have a built-in average function?
         if self.hand_min_pos is not None:
             # hand pose watch is active
-            dpos = (self.hand_last_pos - self.hand_min_pos)
+            dpos = self.hand_last_pos - self.hand_min_pos
+            # rospy.loginfo(f'hand dpos = {dpos}')
             if dpos * self.config[self.pose]['yank']['threshold'] < 0: # reject movement in opposite direction
                 self.hand_min_pos = self.hand_last_pos
             elif abs(dpos) > self.config[self.pose]['yank']['threshold']:
                 rospy.loginfo('bottle yanking detected')
+                self.hand_min_pos = None # detect only once
                 self.yank.publish(Empty())
     
     def arm_stat_cb(self, data):
@@ -194,11 +201,11 @@ class HandoverActuator:
         self.do_move_arm(joints)
     
     def home_cb(self, data):
-        self.cmds.put(ArmMode.CMD_HOME)
+        self.cmds.put(InternalCmd.HOME)
         return TriggerResponse(True, '')
     
     def handover_cb(self, data):
-        self.cmds.put(ArmMode.CMD_HANDOVER)
+        self.cmds.put(InternalCmd.HANDOVER)
         return TriggerResponse(True, '')
 
 if __name__ == '__main__':
