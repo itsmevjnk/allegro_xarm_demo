@@ -42,6 +42,8 @@ AllegroNodeGrasp::~AllegroNodeGrasp() {
 }
 
 void AllegroNodeGrasp::libCmdCallback(const std_msgs::String::ConstPtr &msg) {
+  torque_ctrl = false;
+
   ROS_INFO("CTRL: Heard: [%s]", msg->data.c_str());
   const std::string lib_cmd = msg->data;
 
@@ -58,6 +60,11 @@ void AllegroNodeGrasp::libCmdCallback(const std_msgs::String::ConstPtr &msg) {
   } else if (lib_cmd.compare("save") == 0) {
     for (int i = 0; i < DOF_JOINTS; i++)
       desired_position[i] = current_position[i];
+    ROS_INFO("Saved position: [%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf,%.18lf]",
+      desired_position[0], desired_position[1], desired_position[2], desired_position[3], 
+      desired_position[4], desired_position[5], desired_position[6], desired_position[7], 
+      desired_position[8], desired_position[9], desired_position[10], desired_position[11], 
+      desired_position[12], desired_position[13], desired_position[14], desired_position[15]);
   } else {
     ROS_WARN("Unknown commanded grasp: %s.", lib_cmd.c_str());
   }
@@ -67,12 +74,21 @@ void AllegroNodeGrasp::libCmdCallback(const std_msgs::String::ConstPtr &msg) {
 void AllegroNodeGrasp::setJointCallback(const sensor_msgs::JointState &msg) {
   mutex->lock();
 
-  for (int i = 0; i < DOF_JOINTS; i++)
-    desired_position[i] = msg.position[i];
-  mutex->unlock();
+  if(msg.position.size() > 0 && msg.effort.size() > 0) {
+    ROS_WARN("ERROR: desired position and torque cannot be specified at the same time");
+  }
 
-  pBHand->SetJointDesiredPosition(desired_position);
-  pBHand->SetMotionType(eMotionType_JOINT_PD);
+  if(msg.position.size() > 0) {
+    for (int i = 0; i < DOF_JOINTS; i++) desired_position[i] = msg.position[i];
+    pBHand->SetMotionType(eMotionType_JOINT_PD);
+    pBHand->SetJointDesiredPosition(desired_position);
+    torque_ctrl = false;
+  } else {
+    for (int i = 0; i < DOF_JOINTS; i++) desired_torque[i] = msg.effort[i];
+    torque_ctrl = true;
+  }
+
+  mutex->unlock();
 }
 
 // The grasp controller can set the desired envelop grasp torque by listening to
@@ -84,6 +100,8 @@ void AllegroNodeGrasp::envelopTorqueCallback(const std_msgs::Float32 &msg) {
 }
 
 void AllegroNodeGrasp::computeDesiredTorque() {
+  if(torque_ctrl) return; // nothing to do here - we've got the torque set already
+
   // compute control torque using Bhand library
   pBHand->SetJointPosition(current_position_filtered);
 

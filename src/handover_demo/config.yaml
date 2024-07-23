@@ -11,3 +11,13 @@ side:
   yank:
     joints: [0, 4, 8]
     threshold: 0.2
+
+over:
+  pickup: []
+  handover: []
+  hand: [
+    []
+  ]
+  yank:
+    joints: []
+    threshold: 100.0

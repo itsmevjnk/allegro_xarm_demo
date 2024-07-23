@@ -56,6 +56,7 @@ class AllegroNodeGrasp : public AllegroNode {
     BHand *pBHand = NULL;
 
   double desired_position[DOF_JOINTS] = {0.0};
+  bool torque_ctrl = false;
 };
 
 #endif //PROJECT_ALLEGRO_NODE_GRASP_H
