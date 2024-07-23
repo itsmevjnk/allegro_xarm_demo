@@ -68,7 +68,7 @@ class HandoverDemo:
         rospy.loginfo('subscribing to hand telemetry')
         self.hand_min_pos = None # minimum hand position (for detecting yanking)
         self.hand_last_pos = None # last hand position
-        self.hand_sub = rospy.Subscriber('/hand/joint_pos', JointPos, self.hand_pos_cb)
+        self.hand_sub = rospy.Subscriber('/hand/status', HandStatus, self.hand_cb)
 
         rospy.loginfo('disabling arm service blocking')
         rospy.ServiceProxy('/arm/set_blocking', arm_controller.srv.SetBool)(False)
@@ -122,7 +122,7 @@ class HandoverDemo:
         self.spx_hand_grasp()
         rospy.Timer(rospy.Duration(HAND_MONITOR_DELAY), self.hand_start_monitor, True)
 
-    def hand_pos_cb(self, data):
+    def handcb(self, data):
         pos = [data.pos[i] for i in [0, 4, 8]] # extract joints of interest
         self.hand_last_pos = sum(pos) / len(pos) # NOTE: does Python have a built-in average function?
         if self.hand_min_pos is not None:
