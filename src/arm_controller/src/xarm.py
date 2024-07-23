@@ -78,10 +78,6 @@ class xArmController:
             data.state == 1
         )
         self.status_pub.publish(self.last_status)
-        self.jointpos_pub.publish(JointPos(
-            data.header,
-            data.angle
-        ))
     
     def status_cb(self, req):
         if req.new: # wait for new message
@@ -137,7 +133,7 @@ class xArmController:
 
         rospy.loginfo('xArm: setting up status topic')
         self.status_pub = rospy.Publisher('/arm/status', ArmStatus, queue_size = 10)
-        self.jointpos_pub = rospy.Publisher('/arm/joint_pos', JointPos, queue_size = 10)
+        # self.jointpos_pub = rospy.Publisher('/arm/joint_pos', JointVal, queue_size = 10)
         
         rospy.loginfo('xArm: subscribing to telemetry')
         self.last_status = None # OUR last status message

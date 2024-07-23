@@ -8,8 +8,9 @@ from std_srvs.srv import Trigger, TriggerResponse
 from sensor_msgs.msg import JointState
 from arm_controller.msg import *
 
+HAND_VEL_THRESHOLD = 100 # threshold for considering hand as moving
+
 class AllegroHandController:
-            
     def home(self, req=None):
         rospy.logdebug('AllegroHand: home pose')
         self.lib_cmd.publish(String('home'))
@@ -53,9 +54,14 @@ class AllegroHandController:
         if req is not None: return TriggerResponse(True, '')
     
     def joint_states_cb(self, data):
-        self.jointpos_pub.publish(JointPos(
+        # determine if hand is moving
+        absvel = [abs(x) for x in data.velocity]
+        moving = sum(absvel) / len(absvel) > HAND_VEL_THRESHOLD
+        self.joint_pub.publish(HandStatus(
             data.header,
-            data.position
+            data.position,
+            data.velocity,
+            moving
         ))
 
     def __init__(self, wait_rate = 10):
@@ -82,7 +88,7 @@ class AllegroHandController:
         self.srv_envelop = rospy.Service('/hand/envelop', Trigger, self.envelop)
 
         rospy.loginfo('AllegroHand: setting up telemetry')
-        self.jointpos_pub = rospy.Publisher('/hand/joint_pos', JointPos, queue_size=10)
+        self.joint_pub = rospy.Publisher('/hand/status', HandStatus, queue_size=10)
         self.joint_states = rospy.Subscriber('/allegroHand/joint_states', JointState, self.joint_states_cb)
 
         rospy.loginfo('AllegroHand: ready')
