@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>joint_pos_repub</name>
+  <name>joint_state_repub</name>
   <version>0.0.0</version>
-  <description>The joint_pos_repub package</description>
+  <description>The joint_state_repub package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
