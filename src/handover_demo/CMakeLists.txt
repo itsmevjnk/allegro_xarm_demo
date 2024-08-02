@@ -8,9 +8,11 @@ project(handover_demo)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  message_generation
+  message_runtime
   rospy
   std_msgs
-  message_generation
+  yolo_detector
 )
 
 ## System dependencies are found with CMake's conventions
@@ -67,11 +69,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  yolo_detector
-)
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -105,7 +106,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES handover_demo
-#  CATKIN_DEPENDS rospy std_msgs
+#  CATKIN_DEPENDS message_generation message_runtime rospy std_msgs yolo_detector
 #  DEPENDS system_lib
 )
 
@@ -160,12 +161,10 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  # src/armpos.py
-  src/teleop.py
   src/auto.py
-  src/detector_merge.py
   src/actuator.py
-  # src/getch.py
+  src/detector_merge.py
+  src/teleop.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
