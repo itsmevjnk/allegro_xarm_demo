@@ -56,7 +56,6 @@ class HandoverActuator:
         with open(rospkg.RosPack().get_path('handover_demo') + '/config.yaml', 'r') as f:
             self.config = yaml.load(f)
         
-        self.pose = 'side' # TODO: add more handover poses
         
         rospy.loginfo('waiting for services')
         rospy.wait_for_service('/arm/set_blocking')
@@ -66,7 +65,11 @@ class HandoverActuator:
         rospy.loginfo('creating service proxies')
         self.do_move_arm = rospy.ServiceProxy('/arm/move_joint', MoveArmJoints)
         self.do_intr_arm = rospy.ServiceProxy('/arm/intr_move', Trigger)
-        
+
+        rospy.loginfo('creating handover mode topic')
+        self.pose = 'over' # TODO: add more handover poses
+        rospy.Subscriber('/act/mode', String, self.mode_cb)
+
         rospy.loginfo('creating publisher for direct hand commands')
         self.hand_cmd = rospy.Publisher('/allegroHand/lib_cmd', String)
 
@@ -133,10 +136,14 @@ class HandoverActuator:
 
             r.sleep()
 
+    def mode_cb(self, data):
+        self.pose = data.data
+        rospy.loginfo(f'changed handover mode to {self.pose}')
+
     def step_home(self):
         if self.step_first:
             self.step_first = False
-            self.move_arm(self.config['home']['arm'])
+            self.move_arm(self.config['home']['arm'] if self.hand_min_pos is None else self.config['handover'][self.pose]['retracted'])
             self.step = Steps.IDLE_HOME # we're pretty much done here
 
     def move_hand(self, cmd, wait=False):
@@ -146,59 +153,65 @@ class HandoverActuator:
         if wait:
             while self.hand_state != ActuatorMode.IDLE: pass
 
+    def hand_open_cb(self, event):
+        rospy.loginfo('hand open, moving arm back to home')
+        self.hand_pub.publish(Bool(False))
+        self.cmds.put(InternalCmd.HOME)
+
     def step_release(self):
         if self.step_first:
             self.step_first = False
-            self.move_hand(self.config['home']['hand']) # go back to home position
-            # rospy.Timer(rospy.Duration(HAND_MOVE_DELAY), self.hand_open_cb, True) # the callback does the transition - TODO: read joint velocity to determine if movement is finished
-        elif self.hand_state == ActuatorMode.IDLE: # movement complete
-        # def hand_open_cb(self, event):
-            rospy.loginfo('hand open, moving arm back to home')
-            self.hand_pub.publish(Bool(False))
-            self.cmds.put(InternalCmd.HOME)
+            self.move_hand(self.config['home']['hand']['pose']) # go back to home position
+            rospy.Timer(rospy.Duration(self.config['home']['hand']['delay']), self.hand_open_cb, True) # the callback does the transition - TODO: read joint velocity to determine if movement is finished
     
+    def hand_closed_cb(self, event):
+        rospy.loginfo('hand closed, enabling yank monitoring')
+        self.hand_min_pos = self.hand_last_pos
+        self.hand_pub.publish(Bool(True))
+        self.step = Steps.HANDOVER_3
+        self.step_first = True
+
     def step_handover(self):
         if self.step == Steps.HANDOVER_1:
             if self.step_first: # first firing
                 self.step_first = False
                 self.move_hand(self.config['hand_pickup']) # run hand into pickup position
-                self.move_arm(self.config[self.pose]['pickup'])
+                self.move_arm(self.config['handover'][self.pose]['pickup'])
             elif self.arm_state == ActuatorMode.IDLE and self.hand_state == ActuatorMode.IDLE: # movement is finished
                 self.step = Steps.HANDOVER_2
                 self.step_first = True
         elif self.step == Steps.HANDOVER_2:
             if self.step_first:
                 self.step_first = False
-                self.hand_cmd.publish(String(self.config[self.pose]['hand']))
-                # rospy.Timer(rospy.Duration(HAND_MOVE_DELAY), self.hand_closed_cb, True) # the callback does the transition
-            elif self.hand_state == ActuatorMode.IDLE:
-            # def hand_closed_cb(self, event):
-                rospy.loginfo('hand closed, enabling yank monitoring')
-                self.hand_min_pos = self.hand_last_pos
-                self.hand_pub.publish(Bool(True))
-                self.step = Steps.HANDOVER_3
-                self.step_first = True
+                self.hand_cmd.publish(String(self.config['handover'][self.pose]['hand']['pose']))
+                rospy.Timer(rospy.Duration(self.config['handover'][self.pose]['hand']['delay']), self.hand_closed_cb, True) # the callback does the transition
         elif self.step == Steps.HANDOVER_3:
             if self.step_first:
                 self.step_first = False
-                self.move_arm(self.config[self.pose]['handover'])
+                self.move_arm(self.config['handover'][self.pose]['handover'])
             elif self.arm_state == ActuatorMode.IDLE:
                 self.step = Steps.IDLE_HANDOVER
 
     def hand_stat_cb(self, data):
         # yank detection
-        pos = [data.pos[i] for i in self.config[self.pose]['yank']['joints']] # extract joints of interest
-        self.hand_last_pos = sum(pos) / len(pos) # NOTE: does Python have a built-in average function?
+        self.hand_last_pos = data.pos
         if self.hand_min_pos is not None:
             # hand pose watch is active
-            dpos = self.hand_last_pos - self.hand_min_pos
-            # rospy.loginfo(f'hand dpos = {dpos}')
-            if dpos * self.config[self.pose]['yank']['threshold'] < 0: # reject movement in opposite direction
-                self.hand_min_pos = self.hand_last_pos
-            elif abs(dpos) > self.config[self.pose]['yank']['threshold']:
-                rospy.loginfo('bottle yanking detected')
-                self.hand_min_pos = None # detect only once
-                self.yank.publish(Empty())
+            for ytype in self.config['handover'][self.pose]['yank']:
+                cond = self.config['handover'][self.pose]['yank'][ytype]
+                def calc_avgpos(pos: 'list[float]', joints: 'list[int]'):
+                    pos_interest = [pos[i] for i in joints]
+                    return sum(pos_interest) / len(pos_interest)
+                dpos = calc_avgpos(self.hand_last_pos, cond['joints']) - calc_avgpos(self.hand_min_pos, cond['joints'])
+                # rospy.loginfo(f'{ytype} hand dpos = {dpos}')
+                if dpos * cond['threshold'] < 0: # reject movement in opposite direction
+                    # self.hand_min_pos = self.hand_last_pos
+                    pass
+                elif abs(dpos) > abs(cond['threshold']):
+                    rospy.loginfo(f'bottle yanking detected ({ytype})')
+                    self.hand_min_pos = None # detect only once
+                    self.yank.publish(Empty())
+                    break
         
         # set hand mode
         if self.hand_state == ActuatorMode.MOVE_STAGED:
