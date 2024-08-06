@@ -8,7 +8,7 @@ from queue import Queue # thread-safe queue for passing commands to the spinner
 from enum import IntEnum
 from threading import Lock
 
-from arm_controller.srv import SetBool,SetHand,MoveArmJoints
+from arm_controller.srv import SetBool,MoveArmJoints
 from arm_controller.msg import ArmStatus,HandStatus
 from std_srvs.srv import Trigger, TriggerResponse
 from std_msgs.msg import Empty, String, Bool
