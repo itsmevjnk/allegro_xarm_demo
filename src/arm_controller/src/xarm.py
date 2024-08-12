@@ -9,8 +9,8 @@ from arm_controller.srv import *
 from arm_controller.msg import *
 
 ARM_HOME = [-1.5707963705062866, -0.6283185482025146, 0.0, 0.0, 3.1415927410125732, 0.9599310755729675, 1.8168877363204956] # initial arm joint angles
-ARM_JOINT_MAXVEL = 0.7 # rad/s
-ARM_JOINT_MAXACC = 14.0 # rad/s^2
+ARM_JOINT_MAXVEL = 0.4 # rad/s
+ARM_JOINT_MAXACC = 7.5 # rad/s^2
 ARM_MOVE_MAXVEL = 400.0 # mm/s
 ARM_MOVE_MAXACC = 4000.0 # mm/s^2
 

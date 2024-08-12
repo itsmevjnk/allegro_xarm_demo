@@ -25,9 +25,9 @@
     <arg name="BOTTLE_AREA_THRESHOLD" default="0.0"/>
     <arg name="BOTTLE_ENTER_MIN" default="0.25"/>
     <arg name="BOTTLE_EXIT_MAX" default="0.25"/>
-    <arg name="BOTTLE_BOUNDS" default="0.2,0.0,0.5,1.0"/>
+    <arg name="BOTTLE_BOUNDS" default="0.25,0.0,0.55,1.0"/>
 
-    <arg name="SHOW_CAM" default="false"/>
+    <arg name="SHOW_CAM" default="true"/>
     <arg name="RUN_DEMO" default="true"/> <!-- disable to not run auto.py -->
 
     <include file="$(find arm_controller)/launch/arm_bringup.launch">
