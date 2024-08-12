@@ -30,7 +30,9 @@ class HandoverDemo:
         self.spx_release = rospy.ServiceProxy('/act/release', Trigger)
 
         rospy.loginfo('setting up handover mode publisher')
+        self.mode = None # to be set
         self.pub_mode = rospy.Publisher('/act/mode', String)
+        self.next_mode()
 
         rospy.loginfo('subscribing to detectors')
         self.handover = False # set when it's time to handover
@@ -44,14 +46,23 @@ class HandoverDemo:
     
         rospy.spin()
     
+    def next_mode(self, new = True):
+        # select random mode
+        if self.mode is None or not new:
+            self.mode = random.choice(self.poses) # any random mode
+        else:
+            self.mode = random.choice([p for p in self.poses if p != self.mode])
+        rospy.loginfo(f'setting handover mode to {self.mode}')
+        self.pub_mode.publish(String(self.mode))
+    
     def yank_cb(self, data):
         rospy.loginfo('bottle yanking detected, releasing bottle and going back home')
         self.handover = False
         # self.bottle_in_hand = False
         self.spx_release()
-        next_mode = random.choice(self.poses)
-        rospy.loginfo(f'next handover mode will be {next_mode}')
-        self.pub_mode.publish(String(next_mode))
+        # next_mode = random.choice(self.poses)
+        # rospy.loginfo(f'next handover mode will be {next_mode}')
+        # self.pub_mode.publish(String(next_mode))
     
     def detect_cb(self, data):
         if self.handover: handover = data.human.presence # if we're handing over the bottle, only the human needs to be present
@@ -61,7 +72,7 @@ class HandoverDemo:
             self.handover = handover
 
             if handover: # start handover
-
+                self.next_mode()
                 self.spx_handover()
                 # self.bottle_in_hand = True
             else: # go back home

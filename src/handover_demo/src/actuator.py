@@ -56,7 +56,6 @@ class HandoverActuator:
         with open(rospkg.RosPack().get_path('handover_demo') + '/config.yaml', 'r') as f:
             self.config = yaml.load(f)
         
-        
         rospy.loginfo('waiting for services')
         rospy.wait_for_service('/arm/set_blocking')
         rospy.wait_for_service('/arm/move_joint')
@@ -190,13 +189,14 @@ class HandoverActuator:
                 self.step_first = False
                 self.move_arm(self.config['handover'][self.pose]['handover'])
             elif self.arm_state == ActuatorMode.IDLE:
+                self.hand_min_pos = self.hand_last_pos # update initial position in case the joints drift
                 self.step = Steps.IDLE_HANDOVER
 
     def hand_stat_cb(self, data):
         # yank detection
         self.hand_last_pos = data.pos
-        if self.hand_min_pos is not None:
-            # hand pose watch is active
+        if self.hand_min_pos is not None and self.step == Steps.IDLE_HANDOVER:
+            # hand pose watch is active (only monitor once we've stopped moving and in handover position)
             for ytype in self.config['handover'][self.pose]['yank']:
                 cond = self.config['handover'][self.pose]['yank'][ytype]
                 def calc_avgpos(pos: 'list[float]', joints: 'list[int]'):
