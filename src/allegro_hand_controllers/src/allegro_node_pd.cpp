@@ -151,6 +151,9 @@ void AllegroNodePD::libCmdCallback(const std_msgs::String::ConstPtr &msg) {
 void AllegroNodePD::setJointCallback(const sensor_msgs::JointState &msg) {
   ROS_WARN_COND(!control_hand_, "Setting control_hand_ to True because of "
                 "received JointState message");
+  if(msg.position.size() >= DOF_JOINTS) { // also set joint state if specified
+    for(int i = 0; i < DOF_JOINTS; i++) desired_joint_state.position[i] = msg.position[i];
+  }
   control_hand_ = true;
 }
 
