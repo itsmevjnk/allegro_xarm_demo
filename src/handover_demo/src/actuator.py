@@ -56,21 +56,31 @@ class HandoverActuator:
         with open(rospkg.RosPack().get_path('handover_demo') + '/config.yaml', 'r') as f:
             self.config = yaml.load(f)
         
+        rospy.loginfo('retrieving required poses')
+        poses = set()
+        poses.add(self.config['home']['hand']['pose'])
+        for pose in self.config['handover']:
+            poses.add(self.config['handover'][pose]['hand']['pickup'])
+            poses.add(self.config['handover'][pose]['hand']['grasp'])
+        services = {p: f'/hand/{p}' for p in poses} # create list of services
+
         rospy.loginfo('waiting for services')
         rospy.wait_for_service('/arm/set_blocking')
         rospy.wait_for_service('/arm/move_joint')
         rospy.wait_for_service('/arm/intr_move')
+        for srv in services.values(): rospy.wait_for_service(srv)
 
         rospy.loginfo('creating service proxies')
         self.do_move_arm = rospy.ServiceProxy('/arm/move_joint', MoveArmJoints)
         self.do_intr_arm = rospy.ServiceProxy('/arm/intr_move', Trigger)
+        self.hand_cmd = {p: rospy.ServiceProxy(services[p], Trigger) for p in services}
 
         rospy.loginfo('creating handover mode topic')
         self.pose = 'over' # TODO: add more handover poses
         rospy.Subscriber('/act/mode', String, self.mode_cb)
 
-        rospy.loginfo('creating publisher for direct hand commands')
-        self.hand_cmd = rospy.Publisher('/allegroHand/lib_cmd', String)
+        #rospy.loginfo('creating publisher for direct hand commands')
+        #self.hand_cmd = rospy.Publisher('/allegroHand/lib_cmd', String)
 
         rospy.loginfo('subscribing to arm telemetry')
         self.arm_state = ActuatorMode.IDLE # does this need to be atomic?
@@ -148,7 +158,7 @@ class HandoverActuator:
     def move_hand(self, cmd, wait=False):
         self.hand_state = ActuatorMode.MOVE_STAGED
         self.hand_staging_time = rospy.Time.now().to_sec()
-        self.hand_cmd.publish(String(cmd))
+        self.hand_cmd[cmd]()
         if wait:
             while self.hand_state != ActuatorMode.IDLE: pass
 
@@ -174,7 +184,7 @@ class HandoverActuator:
         if self.step == Steps.HANDOVER_1:
             if self.step_first: # first firing
                 self.step_first = False
-                self.move_hand(self.config['hand_pickup']) # run hand into pickup position
+                self.move_hand(self.config['handover'][self.pose]['hand']['pickup']) # run hand into pickup position
                 self.move_arm(self.config['handover'][self.pose]['pickup'])
             elif self.arm_state == ActuatorMode.IDLE and self.hand_state == ActuatorMode.IDLE: # movement is finished
                 self.step = Steps.HANDOVER_2
@@ -182,7 +192,7 @@ class HandoverActuator:
         elif self.step == Steps.HANDOVER_2:
             if self.step_first:
                 self.step_first = False
-                self.hand_cmd.publish(String(self.config['handover'][self.pose]['hand']['pose']))
+                self.move_hand(self.config['handover'][self.pose]['hand']['grasp']) # run hand into grasping position
                 rospy.Timer(rospy.Duration(self.config['handover'][self.pose]['hand']['delay']), self.hand_closed_cb, True) # the callback does the transition
         elif self.step == Steps.HANDOVER_3:
             if self.step_first:
