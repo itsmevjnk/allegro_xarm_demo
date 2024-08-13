@@ -85,10 +85,35 @@ AllegroNodePD::AllegroNodePD()
 
   joint_cmd_sub = nh.subscribe(
           DESIRED_STATE_TOPIC, 1, &AllegroNodePD::setJointCallback, this);
+
+  set_p_srv = nh.advertiseService(SET_P_SERVICE, &AllegroNodePD::setPCallback, this);
+  set_d_srv = nh.advertiseService(SET_D_SERVICE, &AllegroNodePD::setDCallback, this);
 }
 
 AllegroNodePD::~AllegroNodePD() {
   ROS_INFO("PD controller node is shutting down");
+}
+
+bool AllegroNodePD::setPCallback(allegro_hand_controllers::SetParams::Request &req, allegro_hand_controllers::SetParams::Response &res) {
+  ROS_INFO("SET: P parameters: %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
+    req.params[0], req.params[1], req.params[2], req.params[3],
+    req.params[4], req.params[5], req.params[6], req.params[7],
+    req.params[8], req.params[9], req.params[10], req.params[11],
+    req.params[12], req.params[13], req.params[14], req.params[15]);
+  for(int i = 0; i < DOF_JOINTS; i++) k_p[i] = req.params[i];
+  res.success = 1; res.message = "";
+  return true;
+}
+
+bool AllegroNodePD::setDCallback(allegro_hand_controllers::SetParams::Request &req, allegro_hand_controllers::SetParams::Response &res) {
+  ROS_INFO("SET: D parameters: %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
+    req.params[0], req.params[1], req.params[2], req.params[3],
+    req.params[4], req.params[5], req.params[6], req.params[7],
+    req.params[8], req.params[9], req.params[10], req.params[11],
+    req.params[12], req.params[13], req.params[14], req.params[15]);
+  for(int i = 0; i < DOF_JOINTS; i++) k_d[i] = req.params[i];
+  res.success = 1; res.message = "";
+  return true;
 }
 
 // Called when an external (string) message is received

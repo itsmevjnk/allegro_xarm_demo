@@ -2,7 +2,7 @@
 #define __ALLEGRO_NODE_PD_H__
 
 #include "allegro_node.h"
-
+#include "allegro_hand_controllers/SetParams.h"
 
 // Joint-space PD control of the Allegro hand.
 //
@@ -25,6 +25,9 @@ class AllegroNodePD : public AllegroNode {
 
   void setJointCallback(const sensor_msgs::JointState &msg);
 
+  bool setPCallback(allegro_hand_controllers::SetParams::Request &req, allegro_hand_controllers::SetParams::Response &res);
+  bool setDCallback(allegro_hand_controllers::SetParams::Request &req, allegro_hand_controllers::SetParams::Response &res);
+
   // Loads all gains and initial positions from the parameter server.
   void initController(const std::string &whichHand);
 
@@ -38,6 +41,10 @@ class AllegroNodePD : public AllegroNode {
   // Subscribe to desired joint states, only so we can set control_hand_ to true
   // when we receive a desired command.
   ros::Subscriber joint_cmd_sub;
+
+  // service for setting PD parameters
+  ros::ServiceServer set_p_srv;
+  ros::ServiceServer set_d_srv;
 
   // If this flag is true, the hand will be controlled (either in joint position
   // or joint torques). If false, desired torques will all be zero.

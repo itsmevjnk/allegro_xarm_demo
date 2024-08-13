@@ -96,6 +96,9 @@
     <remap from="allegroHand/envelop_torque" to="allegroHand_$(arg NUM)/envelop_torque"/>
     <remap from="allegroHand/joint_current_states" to="allegroHand_$(arg NUM)/joint_current_states"/>
     <remap from="allegroHand/joint_desired_states" to="allegroHand_$(arg NUM)/joint_desired_states"/>
+
+    <remap from="allegroHand/params/p" to="allegroHand_$(arg NUM)/params/p"/>
+    <remap from="allegroHand/params/d" to="allegroHand_$(arg NUM)/params/d"/>
     
 
     <!--parameters are within the scope of the hand node so that multiple hands can be run at the same time -->
