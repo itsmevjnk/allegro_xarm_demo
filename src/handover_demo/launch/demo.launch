@@ -6,6 +6,7 @@
     <arg name="HAND_PARAMS_DIR" default="$(find allegro_hand_parameters)"/>
     <arg name="HAND_ZEROS" default="$(arg HAND_PARAMS_DIR)/zero.yaml"/>
     <arg name="HAND_CAN_POLLING" default="true"/>
+    <arg name="HAND_PD" default="false"/>
 
     <!-- xArm config -->
     <arg name="ARM_IP" default="192.168.1.209"/>
@@ -37,6 +38,7 @@
         <arg name="HAND_PARAMS_DIR" value="$(arg HAND_PARAMS_DIR)"/>
         <arg name="HAND_ZEROS" value="$(arg HAND_ZEROS)"/>
         <arg name="HAND_CAN_POLLING" value="$(arg HAND_CAN_POLLING)"/>
+        <arg name="HAND_PD" value="$(arg HAND_PD)"/>
         <arg name="ARM_IP" value="$(arg ARM_IP)"/>
         <arg name="ARM_REPORT_TYPE" value="$(arg ARM_REPORT_TYPE)"/>
     </include>

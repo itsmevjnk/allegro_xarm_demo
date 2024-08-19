@@ -165,6 +165,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   src/xarm.py
   src/hand.py
+  src/hand_pd.py
   scripts/teleop.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

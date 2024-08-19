@@ -11,8 +11,22 @@ find_package(catkin REQUIRED COMPONENTS
   bhand
   libpcan
   roscpp
+  std_msgs
+  message_generation
   sensor_msgs
 # roslaunch  # Disabled due to testing
+)
+
+## Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  SetParams.srv
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
 )
 
 ###################################
@@ -21,10 +35,9 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES allegro_hand_controllers
-  CATKIN_DEPENDS allegro_hand_driver bhand libpcan roscpp sensor_msgs
+  CATKIN_DEPENDS allegro_hand_driver bhand libpcan roscpp sensor_msgs std_msgs message_generation
 #  DEPENDS
 )
-
 ###########
 ## Build ##
 ###########

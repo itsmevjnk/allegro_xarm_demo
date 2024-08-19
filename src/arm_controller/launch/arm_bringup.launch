@@ -13,6 +13,7 @@
     <arg name="HAND_ZEROS" default="$(arg HAND_PARAMS_DIR)/zero.yaml"/>
     <arg name="HAND_CAN_POLLING" default="true"/>
     <arg name="HAND_JSP_GUI" default="false"/>
+    <arg name="HAND_PD" default="false"/>
 
     <!-- xArm config -->
     <arg name="ARM_IP" default="192.168.1.209"/>
@@ -21,10 +22,12 @@
     <param name="robot_description" command="$(find xacro)/xacro $(find allegro_hand_description)/allegro_hand_description_$(arg HAND).xacro"/>
 
     <group if="$(arg HAND_CTL)">
-        <!-- Allegro Hand controller and communication node (we'll use grasp for now) -->
+        <!-- Allegro Hand controller and communication node -->
+        <arg name="HAND_CTL_TYPE" value="allegro_node_grasp" unless="$(arg HAND_PD)"/>
+        <arg name="HAND_CTL_TYPE" value="allegro_node_pd" if="$(arg HAND_PD)"/>
         <node name="allegro_hand"
             pkg="allegro_hand_controllers"
-            type="allegro_node_grasp"
+            type="$(arg HAND_CTL_TYPE)"
             output="screen"
             clear_params="true"
             respawn="false" respawn_delay="2"
@@ -62,7 +65,14 @@
             pkg="arm_controller"
             type="hand.py"
             output="screen"
-            required="true"/>
+            required="true"
+            unless="$(arg HAND_PD)"/>
+        <node name="hand_controller"
+            pkg="arm_controller"
+            type="hand_pd.py"
+            output="screen"
+            required="true"
+            if="$(arg HAND_PD)"/>
     </group>
 
     <group if="$(arg ARM_CTL)">

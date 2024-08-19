@@ -25,6 +25,8 @@ class AllegroHandDrv;
 const std::string JOINT_STATE_TOPIC = "allegroHand/joint_states";
 const std::string DESIRED_STATE_TOPIC = "allegroHand/joint_cmd";
 const std::string LIB_CMD_TOPIC = "allegroHand/lib_cmd";
+const std::string SET_P_SERVICE = "allegroHand/params/p";
+const std::string SET_D_SERVICE = "allegroHand/params/d";
 
 class AllegroNode {
  public:
