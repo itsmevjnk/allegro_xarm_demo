@@ -174,8 +174,8 @@ class HandoverActuator:
             rospy.Timer(rospy.Duration(self.config['home']['hand']['delay']), self.hand_open_cb, True) # the callback does the transition - TODO: read joint velocity to determine if movement is finished
     
     def hand_closed_cb(self, event):
-        rospy.loginfo('hand closed')
-        # self.hand_min_pos = self.hand_last_pos
+        rospy.loginfo('hand closed, enabling yank monitoring')
+        self.hand_min_pos = self.hand_last_pos
         self.hand_pub.publish(Bool(True))
         self.step = Steps.HANDOVER_3
         self.step_first = True
@@ -199,14 +199,13 @@ class HandoverActuator:
                 self.step_first = False
                 self.move_arm(self.config['handover'][self.pose]['handover'])
             elif self.arm_state == ActuatorMode.IDLE:
-                rospy.loginfo('enabling yank monitoring')
                 self.hand_min_pos = self.hand_last_pos # update initial position in case the joints drift
                 self.step = Steps.IDLE_HANDOVER
 
     def hand_stat_cb(self, data):
         # yank detection
         self.hand_last_pos = data.pos
-        if self.hand_min_pos is not None:
+        if self.hand_min_pos is not None and self.step == Steps.IDLE_HANDOVER:
             # hand pose watch is active (only monitor once we've stopped moving and in handover position)
             for ytype in self.config['handover'][self.pose]['yank']:
                 cond = self.config['handover'][self.pose]['yank'][ytype]
