@@ -276,8 +276,9 @@ class HandoverActuator:
     
     def killsw_cb(self, data):
         self.kill = not self.kill
-        rospy.loginfo(f'kill switch set to {self.kill}')
-        return TriggerResponse(True, f'set to {self.kill}')
+        log = f'{"DISABLED" if self.kill else "ENABLED"} actuation'
+        rospy.loginfo(log)
+        return TriggerResponse(True, log)
 
 if __name__ == '__main__':
     rospy.init_node('handover_actuator')
