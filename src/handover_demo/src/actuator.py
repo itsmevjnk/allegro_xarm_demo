@@ -109,11 +109,17 @@ class HandoverActuator:
         rospy.Service('/act/release', Trigger, self.release_cb)
         rospy.Service('/act/handover', Trigger, self.handover_cb)
 
+        rospy.loginfo('setting up kill switch')
+        self.kill = False
+        rospy.Service('/act/kill', Trigger, self.killsw_cb)
+
         # run ourselves as spinner thread
         self.step = Steps.HOME # first command is to go to home pose
         self.step_first = False # set to indicate that we're first transitioning into step
         r = rospy.Rate(SPIN_RATE)
         while not rospy.is_shutdown():
+            if self.kill: continue # stop processing until kill switch is released
+
             if not self.cmds.empty():
                 # there's a command waiting for us
                 cmd = self.cmds.get()
@@ -206,7 +212,7 @@ class HandoverActuator:
     def hand_stat_cb(self, data):
         # yank detection
         self.hand_last_pos = data.pos
-        if self.hand_min_pos is not None:
+        if self.hand_min_pos is not None and not self.kill:
             # hand pose watch is active (only monitor once we've stopped moving and in handover position)
             for ytype in self.config['handover'][self.pose]['yank']:
                 cond = self.config['handover'][self.pose]['yank'][ytype]
@@ -267,6 +273,11 @@ class HandoverActuator:
     def release_cb(self, data):
         self.cmds.put(InternalCmd.RELEASE)
         return TriggerResponse(True, '')
+    
+    def killsw_cb(self, data):
+        self.kill = not self.kill
+        rospy.loginfo(f'kill switch set to {self.kill}')
+        return TriggerResponse(True, f'set to {self.kill}')
 
 if __name__ == '__main__':
     rospy.init_node('handover_actuator')
