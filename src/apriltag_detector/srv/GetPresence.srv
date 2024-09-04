@@ -1,0 +1,15 @@
+# request:
+#   none
+
+---
+
+# response:
+#   success     bool        whether the request is successful (will always return true for now)
+#   message     string      description of request success/failure status
+#   presence    bool        presence of object in frame (i.e. last event sent out)
+#   raw         bool        "raw" presence of object (i.e. whether there is an object in the last frame)
+
+bool success
+string message
+bool presence
+bool raw
