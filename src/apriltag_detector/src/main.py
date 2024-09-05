@@ -9,7 +9,7 @@ from apriltag_detector.msg import Event
 from apriltag_detector.srv import GetPresence, GetPresenceResponse
 
 class AprilTagDetector:
-    def __init__(self, namespace: str, obj_name: str, cam_id: int, cam_resolution: 'str | None' = None, enter_min: float = 1.0, exit_max: float = 0.5, show_cam: bool = False):
+    def __init__(self, namespace: str, cam_id: int, cam_resolution: 'str | None' = None, enter_min: float = 1.0, exit_max: float = 0.5, show_cam: bool = False):
         self.cap = cv2.VideoCapture(cam_id) # start camera
         # self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
         if cam_resolution is not None and len(cam_resolution) > 0: # set custom resolution
@@ -28,10 +28,10 @@ class AprilTagDetector:
         self.show_cam = show_cam
 
         # start interface
-        rospy.loginfo(f'apriltag_detector: starting ROS interface (as {obj_name})')
+        rospy.loginfo(f'apriltag_detector: starting ROS interface')
         self.event_seq = 0
-        self.pub_event = rospy.Publisher(f'{namespace}/events/{obj_name}', Event, queue_size=10) # publisher
-        self.srv_presence = rospy.Service(f'{namespace}/pres/{obj_name}', GetPresence, self.srv_presence_cb)
+        self.pub_event = rospy.Publisher(f'{namespace}/event', Event, queue_size=10) # publisher
+        self.srv_presence = rospy.Service(f'{namespace}/pres', GetPresence, self.srv_presence_cb)
 
         self.frames = 0 # frame counter
         self.run() # start running
@@ -112,7 +112,6 @@ if __name__ == '__main__':
 
     AprilTagDetector(
         node_name,
-        str(rospy.get_param(f'{node_name}/OBJ_NAME')),
         int(rospy.get_param(f'{node_name}/CAM_ID', default=0)),
         str(rospy.get_param(f'{node_name}/CAM_RESOLUTION', default=None)),
         float(rospy.get_param(f'{node_name}/ENTER_MIN', default=1.0)),

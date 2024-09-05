@@ -5,7 +5,6 @@
     <arg name="EXIT_MAX" default="0.5"/>
     <arg name="SHOW_CAM" default="true"/>
     <arg name="REQUIRED" default="true"/>
-    <arg name="OBJ_NAME"/>
     <arg name="NAME" default="apriltag_detector"/>
 
     <node name="$(arg NAME)"
@@ -18,6 +17,5 @@
         <param name="ENTER_MIN" value="$(arg ENTER_MIN)"/>
         <param name="EXIT_MAX" value="$(arg EXIT_MAX)"/>
         <param name="SHOW_CAM" value="$(arg SHOW_CAM)"/>
-        <param name="OBJ_NAME" value="$(arg OBJ_NAME)"/>
     </node>
 </launch>
