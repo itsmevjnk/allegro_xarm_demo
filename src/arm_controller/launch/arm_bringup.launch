@@ -4,6 +4,7 @@
     <!-- hand/arm control enable -->
     <arg name="HAND_CTL" default="true"/>
     <arg name="ARM_CTL" default="true"/>
+    <arg name="GRIP_CTL" default="false"/>
 
     <!-- Allegro Hand config -->
     <arg name="HAND" default="right"/>
@@ -87,6 +88,8 @@
             pkg="arm_controller"
             type="xarm.py"
             output="screen"
-            required="true"/>
+            required="true">
+            <param name="GRIPPER" value="$(arg GRIP_CTL)"/>
+        </node>
     </group>
 </launch>

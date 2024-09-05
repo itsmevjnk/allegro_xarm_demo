@@ -14,6 +14,10 @@ ARM_JOINT_MAXACC = 7.5 # rad/s^2
 ARM_MOVE_MAXVEL = 400.0 # mm/s
 ARM_MOVE_MAXACC = 4000.0 # mm/s^2
 
+GRIP_SPEED = 3000
+GRIP_OPEN = 850
+GRIP_CLOSE = 100
+
 class xArmController:
     def set_blocking(self, state):
         rospy.logdebug(f'xArm: set command blocking to {state}')
@@ -92,8 +96,15 @@ class xArmController:
         if self.last_status is None: return GetArmStatusResponse(False, 'No status messages', None)
         else: return GetArmStatusResponse(True, '', self.last_status)
             
+    def grip_open_cb(self, req):
+        self.spx_grip_move(GRIP_OPEN)
+        return TriggerResponse(True, '')
+    
+    def grip_close_cb(self, req):
+        self.spx_grip_move(GRIP_CLOSE)
+        return TriggerResponse(True, '')
 
-    def __init__(self, blocking=True):
+    def __init__(self, gripper, blocking=True):
         rospy.loginfo('xArm: waiting for services to come online')
         rospy.wait_for_service('/xarm/motion_ctrl')
         rospy.wait_for_service('/xarm/set_mode')
@@ -114,6 +125,18 @@ class xArmController:
         self.spx_set_state(0) # get ready
 
         self.set_blocking(True) # synchronous operation during init
+
+        if gripper:
+            rospy.loginfo('xArm: initialising gripper')
+            rospy.ServiceProxy('/xarm/gripper_config', GripperConfig)(GRIP_SPEED)
+            self.spx_grip_move = rospy.ServiceProxy('/xarm/gripper_move', GripperMove)
+
+            rospy.loginfo('xArm: setting up gripper services')
+            self.srv_grip_open = rospy.Service('/grip/open', Trigger, self.grip_open_cb)
+            self.srv_grip_close = rospy.Service('/grip/close', Trigger, self.grip_close_cb)
+
+            rospy.loginfo('xArm: releasing gripper')
+            self.spx_grip_move(GRIP_OPEN)
 
         rospy.loginfo('xArm: moving to home position')
         self.home()
@@ -142,5 +165,7 @@ class xArmController:
 if __name__ == '__main__':
     rospy.init_node('xarm_controller')
 
-    xArmController()
+    xArmController(
+        bool(rospy.get_param(f'{rospy.get_name()}/GRIPPER'))
+    )
     rospy.spin()
