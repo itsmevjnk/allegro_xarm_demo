@@ -92,6 +92,7 @@ class HandoverActuator:
         self.hand_last_pos = None # last hand position
         self.hand_state = ActuatorMode.IDLE
         self.hand_staging_time = None
+        self.object_in_hand = False
         rospy.Subscriber('/hand/status', HandStatus, self.hand_stat_cb)
 
         rospy.loginfo('publishing yanking detection topic')
@@ -132,7 +133,7 @@ class HandoverActuator:
                 elif cmd == InternalCmd.HANDOVER:
                     if self.step >= Steps.HANDOVER_1 and self.step <= Steps.HANDOVER_3: # already doing handover
                         pass
-                    elif self.hand_min_pos is not None: # object already in hand
+                    elif self.object_in_hand: # object already in hand
                         self.step = Steps.HANDOVER_3
                         self.step_first = True
                     else:
@@ -170,6 +171,7 @@ class HandoverActuator:
 
     def hand_open_cb(self, event):
         rospy.loginfo('hand open, moving arm back to home')
+        self.object_in_hand = False
         self.hand_pub.publish(Bool(False))
         self.cmds.put(InternalCmd.HOME)
 
@@ -182,6 +184,7 @@ class HandoverActuator:
     def hand_closed_cb(self, event):
         rospy.loginfo('hand closed')
         # self.hand_min_pos = self.hand_last_pos
+        self.object_in_hand = True
         self.hand_pub.publish(Bool(True))
         self.step = Steps.HANDOVER_3
         self.step_first = True
