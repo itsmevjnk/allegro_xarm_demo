@@ -1,4 +1,6 @@
 <launch>
+    <arg name="END_EFFECTOR" default="gripper"/>
+    
     <!-- Allegro Hand config -->
     <arg name="HAND" default="right"/>
     <arg name="HAND_AUTO_CAN" default="true"/>
@@ -20,13 +22,10 @@
     <arg name="HUMAN_EXIT_MAX" default="0.5"/>
     <arg name="HUMAN_BOUNDS" default="0.0,0.0,1.0,1.0"/>
 
-    <!-- bottle detection config -->
-    <arg name="BOTTLE_CAM_ID"/>
-    <arg name="BOTTLE_CONF_THRESHOLD" default="0.45"/>
-    <arg name="BOTTLE_AREA_THRESHOLD" default="0.0"/>
-    <arg name="BOTTLE_ENTER_MIN" default="0.25"/>
-    <arg name="BOTTLE_EXIT_MAX" default="0.25"/>
-    <arg name="BOTTLE_BOUNDS" default="0.25,0.0,0.55,1.0"/>
+    <!-- object detection config -->
+    <arg name="OBJECT_CAM_ID"/>
+    <arg name="OBJECT_ENTER_MIN" default="0.25"/>
+    <arg name="OBJECT_EXIT_MAX" default="0.25"/>
 
     <arg name="SHOW_CAM" default="true"/>
     <arg name="RUN_DEMO" default="true"/> <!-- disable to not run auto.py -->
@@ -41,6 +40,8 @@
         <arg name="HAND_PD" value="$(arg HAND_PD)"/>
         <arg name="ARM_IP" value="$(arg ARM_IP)"/>
         <arg name="ARM_REPORT_TYPE" value="$(arg ARM_REPORT_TYPE)"/>
+        <arg name="HAND_CTL" value="false" unless="$(eval arg('END_EFFECTOR') == 'hand')"/>
+        <arg name="GRIP_CTL" value="true" if="$(eval arg('END_EFFECTOR') == 'gripper')"/>
     </include>
 
     <node name="handover_demo"
@@ -48,7 +49,9 @@
         type="auto.py"
         output="screen"
         required="true"
-        if="$(arg RUN_DEMO)"/>
+        if="$(arg RUN_DEMO)">
+        <param name="END_EFFECTOR" value="$(arg END_EFFECTOR)"/>
+    </node>
     
     <include file="$(find yolo_detector)/launch/yolo.launch">
         <arg name="NAME" value="human_detector"/>
@@ -62,16 +65,12 @@
         <arg name="BOUNDARY" value="$(arg HUMAN_BOUNDS)"/>
     </include>
 
-    <include file="$(find yolo_detector)/launch/yolo.launch">
-        <arg name="NAME" value="bottle_detector"/>
-        <arg name="CAM_ID" value="$(arg BOTTLE_CAM_ID)"/>
-        <arg name="CLASSIFIERS" value="bottle"/>
-        <arg name="CONF_THRESHOLD" value="$(arg BOTTLE_CONF_THRESHOLD)"/>
-        <arg name="AREA_THRESHOLD" value="$(arg BOTTLE_AREA_THRESHOLD)"/>
-        <arg name="ENTER_MIN" value="$(arg BOTTLE_ENTER_MIN)"/>
-        <arg name="EXIT_MAX" value="$(arg BOTTLE_EXIT_MAX)"/>
+    <include file="$(find apriltag_detector)/launch/atag.launch">
+        <arg name="NAME" value="object_detector"/>
+        <arg name="CAM_ID" value="$(arg OBJECT_CAM_ID)"/>
+        <arg name="ENTER_MIN" value="$(arg OBJECT_ENTER_MIN)"/>
+        <arg name="EXIT_MAX" value="$(arg OBJECT_EXIT_MAX)"/>
         <arg name="SHOW_CAM" value="$(arg SHOW_CAM)"/>
-        <arg name="BOUNDARY" value="$(arg BOTTLE_BOUNDS)"/>
     </include>
 
     <node name="detector_merge"
@@ -84,5 +83,7 @@
         pkg="handover_demo"
         type="actuator.py"
         output="screen"
-        required="true"/>
+        required="true">
+        <param name="END_EFFECTOR" value="$(arg END_EFFECTOR)"/>
+    </node>
 </launch>

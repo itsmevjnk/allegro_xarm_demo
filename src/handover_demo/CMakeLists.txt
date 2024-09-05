@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   yolo_detector
+  apriltag_detector
 )
 
 ## System dependencies are found with CMake's conventions
@@ -73,6 +74,7 @@ generate_messages(
   DEPENDENCIES
   std_msgs
   yolo_detector
+  apriltag_detector
 )
 
 ################################################

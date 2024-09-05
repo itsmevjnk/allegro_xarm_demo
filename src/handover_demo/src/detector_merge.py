@@ -3,7 +3,8 @@
 import rospy
 import threading
 
-from yolo_detector.msg import Event
+import yolo_detector
+import apriltag_detector
 from handover_demo.msg import MergedEvent
 from std_msgs.msg import Header
 
@@ -16,11 +17,11 @@ class DetectorMerge:
 
         rospy.loginfo('subscribing to human detection')
         self.human_msg = None
-        rospy.Subscriber('/human_detector/events/person', Event, self.human_cb)
+        rospy.Subscriber('/human_detector/events/person', yolo_detector.msg.Event, self.human_cb)
 
-        rospy.loginfo('subscribing to bottle detection')
-        self.bottle_msg = None
-        rospy.Subscriber('/bottle_detector/events/bottle', Event, self.bottle_cb)
+        rospy.loginfo('subscribing to object detection')
+        self.object_msg = None
+        rospy.Subscriber('/object_detector/event', apriltag_detector.msg.Event, self.object_cb)
 
         rospy.spin()
     
@@ -34,7 +35,7 @@ class DetectorMerge:
                     str(self.pub_seq)
                 ),
                 self.human_msg,
-                self.bottle_msg
+                self.object_msg
             ))
             self.pub_seq += 1
 
@@ -42,8 +43,8 @@ class DetectorMerge:
         self.human_msg = data
         self.publish()
     
-    def bottle_cb(self, data):
-        self.bottle_msg = data
+    def object_cb(self, data):
+        self.object_msg = data
         self.publish()
 
 if __name__ == '__main__':
