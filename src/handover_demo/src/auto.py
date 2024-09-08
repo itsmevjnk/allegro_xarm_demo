@@ -7,7 +7,7 @@ import random
 
 from yolo_detector.msg import Event
 from handover_demo.msg import MergedEvent
-from std_srvs.srv import Trigger
+from std_srvs.srv import Trigger, TriggerResponse
 from std_msgs.msg import Empty, Bool, String
 
 HAND_MONITOR_DELAY = 0.5
@@ -41,6 +41,9 @@ class HandoverDemo:
         # rospy.Subscriber('/act/yank', Empty, self.yank_cb)
         rospy.Subscriber('/act/ee_state', Bool, self.ee_state_cb)
 
+        rospy.loginfo('creating service for releasing')
+        rospy.Service('/handover/release', Trigger, self.release_cb)
+
         rospy.loginfo('moving to initial position')
         self.spx_home()
     
@@ -55,14 +58,14 @@ class HandoverDemo:
         rospy.loginfo(f'setting handover mode to {self.mode}')
         self.pub_mode.publish(String(self.mode))
     
-    # def yank_cb(self, data):
-    #     rospy.loginfo('object yanking detected, releasing object and going back home')
-    #     self.handover = False
-    #     self.holding_object = False
-    #     self.spx_release()
-    #     # next_mode = random.choice(self.poses)
-    #     # rospy.loginfo(f'next handover mode will be {next_mode}')
-    #     # self.pub_mode.publish(String(next_mode))
+    def release_cb(self, data):
+        rospy.loginfo('releasing object and going back home')
+        self.handover = False
+        self.holding_object = False
+        self.spx_release()
+        # next_mode = random.choice(self.poses)
+        # rospy.loginfo(f'next handover mode will be {next_mode}')
+        # self.pub_mode.publish(String(next_mode))
     
     def detect_cb(self, data):
         if self.handover: handover = data.human.presence # if we're handing over the object, only the human needs to be present
@@ -77,6 +80,8 @@ class HandoverDemo:
                 # holding_object will be set upon completion of grasping
             else: # go back home
                 self.spx_home()
+        
+        return TriggerResponse(True, '')
     
     def ee_state_cb(self, data):
         rospy.loginfo(f'end effector state updated to {data.data}')
