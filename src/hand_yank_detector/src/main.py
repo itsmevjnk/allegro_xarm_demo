@@ -16,10 +16,10 @@ class YankDetector:
             self.config = yaml.load(f)
 
         rospy.loginfo('waiting for services')
-        rospy.wait_for_service('/act/release')
+        rospy.wait_for_service('/handover/release')
 
         rospy.loginfo('creating release service proxy')
-        self.release = rospy.ServiceProxy('/act/release', Trigger)
+        self.release = rospy.ServiceProxy('/handover/release', Trigger)
 
         rospy.loginfo('subscribing to handover pose')
         self.pose = None
