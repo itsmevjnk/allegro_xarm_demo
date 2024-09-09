@@ -31,6 +31,7 @@
     <arg name="RUN_DEMO" default="true"/> <!-- disable to not run auto.py -->
 
     <arg name="HAND_YANK" default="false"/>
+    <arg name="CONTROLS" default="false"/>
 
     <include file="$(find arm_controller)/launch/arm_bringup.launch">
         <arg name="HAND" value="$(arg HAND)"/>
@@ -95,4 +96,6 @@
         output="screen"
         required="true"
         if="$(arg HAND_YANK)"/>
+    
+    <include file="$(find handover_demo)/launch/controls.launch" if="$(arg CONTROLS)"/>
 </launch>

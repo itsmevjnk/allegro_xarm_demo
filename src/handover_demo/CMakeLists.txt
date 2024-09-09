@@ -168,6 +168,7 @@ catkin_install_python(PROGRAMS
   src/actuator.py
   src/detector_merge.py
   src/teleop.py
+  scripts/controls.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -1,0 +1,7 @@
+<launch>
+    <node name="handover_controls"
+        pkg="handover_demo"
+        type="controls.py"
+        output="screen"
+        required="true"/>
+</launch>

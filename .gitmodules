@@ -4,3 +4,6 @@
 [submodule "src/arm_controller/scripts/Gamepad"]
 	path = src/arm_controller/scripts/Gamepad
 	url = https://github.com/piborg/Gamepad.git
+[submodule "src/handover_demo/scripts/Gamepad"]
+	path = src/handover_demo/scripts/Gamepad
+	url = https://github.com/piborg/Gamepad.git
