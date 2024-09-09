@@ -30,6 +30,8 @@
     <arg name="SHOW_CAM" default="true"/>
     <arg name="RUN_DEMO" default="true"/> <!-- disable to not run auto.py -->
 
+    <arg name="HAND_YANK" default="false"/>
+
     <include file="$(find arm_controller)/launch/arm_bringup.launch">
         <arg name="HAND" value="$(arg HAND)"/>
         <arg name="HAND_AUTO_CAN" value="$(arg HAND_AUTO_CAN)"/>
@@ -86,4 +88,11 @@
         required="true">
         <param name="END_EFFECTOR" value="$(arg END_EFFECTOR)"/>
     </node>
+
+    <node name="yank_detector"
+        pkg="hand_yank_detector"
+        type="main.py"
+        output="screen"
+        required="true"
+        if="$(arg HAND_YANK)"/>
 </launch>

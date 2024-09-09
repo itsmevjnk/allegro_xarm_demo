@@ -1,0 +1,39 @@
+activation_delay: 0.5
+
+types:
+  side:
+    top_pull:
+      joints: [0, 4, 8]
+      threshold: 0.2
+    near_lift:
+      joints: [14, 15, 3, 2]
+      threshold: -0.1
+    far_lift:
+      joints: [10, 11]
+      threshold: -0.1
+  under:
+    near_pull:
+      joints: [0, 4, 8]
+      threshold: 0.2
+    near_lift:
+      joints: [14, 15, 3, 2]
+      threshold: -0.1
+    far_lift:
+      joints: [10, 11]
+      threshold: -0.1
+    far_pull:
+      joints: [0, 4, 8]
+      threshold: -0.2
+  over:
+    near_pull:
+      joints: [0, 4, 8]
+      threshold: 0.2
+    near_lift:
+      joints: [14, 15, 3, 2]
+      threshold: -0.2
+    far_lift:
+      joints: [10, 11]
+      threshold: -0.2
+    far_pull:
+      joints: [0, 4, 8]
+      threshold: -0.2
