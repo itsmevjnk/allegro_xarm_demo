@@ -83,6 +83,7 @@ class HandoverActuator:
         rospy.Subscriber('/arm/status', ArmStatus, self.arm_stat_cb)
 
         rospy.loginfo('publishing end effector state topic')
+        self.ee_closing = False
         self.ee_pub = rospy.Publisher('/act/ee_state', Bool)
 
         rospy.loginfo('disabling arm service blocking')
@@ -146,9 +147,9 @@ class HandoverActuator:
             self.move_arm(self.poses[self.pose]['retracted'] if self.holding_object else None)
             self.step = Steps.IDLE_HOME # we're pretty much done here
 
-    def move_ee(self, state):
-        if state: self.do_close_ee()
-        else: self.do_open_ee()
+    # def move_ee(self, state):
+    #     if state: self.do_close_ee()
+    #     else: self.do_open_ee()
 
     def ee_open_cb(self, event):
         rospy.loginfo('end effector open, moving arm back to home')
@@ -159,7 +160,7 @@ class HandoverActuator:
     def step_release(self):
         if self.step_first:
             self.step_first = False
-            self.move_hand(self.config['home']['hand']['pose']) # go back to home position
+            self.do_open_ee()
             if self.config['delay'] > 0:
                 rospy.Timer(rospy.Duration(self.config['delay']), self.ee_open_cb, True) # the callback does the transition - TODO: read joint velocity to determine if movement is finished
             else:
@@ -172,6 +173,7 @@ class HandoverActuator:
         self.ee_pub.publish(Bool(True))
         self.step = Steps.HANDOVER_START + len(self.poses[self.pose]['handover']) - 1
         self.step_first = True
+        self.ee_closing = False
 
     def step_handover(self):
         if self.step >= Steps.PICKUP_START and self.step <= Steps.PICKUP_END:
@@ -182,11 +184,13 @@ class HandoverActuator:
                 self.move_arm(self.poses[self.pose]['pickup'][n])
             elif self.arm_state == ActuatorMode.IDLE:
                 if n == len(self.poses[self.pose]['pickup']) - 1: # last step - time to do handover
-                    self.do_close_ee()
-                    if self.config['delay'] > 0:
-                        rospy.Timer(rospy.Duration(self.config['delay']), self.ee_closed_cb, True) # the callback does the transition
-                    else:
-                        self.ee_closed_cb(None)
+                    if not self.ee_closing:
+                        self.ee_closing = True
+                        self.do_close_ee()
+                        if self.config['delay'] > 0:
+                            rospy.Timer(rospy.Duration(self.config['delay']), self.ee_closed_cb, True) # the callback does the transition
+                        else:
+                            self.ee_closed_cb(None)
                 else:
                     self.step += 1
                     self.step_first = True
