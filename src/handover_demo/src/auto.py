@@ -66,6 +66,7 @@ class HandoverDemo:
         # next_mode = random.choice(self.poses)
         # rospy.loginfo(f'next handover mode will be {next_mode}')
         # self.pub_mode.publish(String(next_mode))
+        return TriggerResponse(True, 'object released')
     
     def detect_cb(self, data):
         if self.handover: handover = data.human.presence # if we're handing over the object, only the human needs to be present
@@ -80,8 +81,6 @@ class HandoverDemo:
                 # holding_object will be set upon completion of grasping
             else: # go back home
                 self.spx_home()
-        
-        return TriggerResponse(True, '')
     
     def ee_state_cb(self, data):
         rospy.loginfo(f'end effector state updated to {data.data}')
