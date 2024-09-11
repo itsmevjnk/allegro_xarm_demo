@@ -49,7 +49,8 @@ class AprilTagDetector:
 
     def run(self):
         while not rospy.is_shutdown():
-            ret, img = self.cap.read() # capture from camera  
+            ret, img = self.cap.read() # capture from camera
+            img = cv2.GaussianBlur(img, (5, 5), 0)
             height, width, _ = img.shape   
             frame_area = width * height
 
@@ -57,7 +58,7 @@ class AprilTagDetector:
             timestamp = rospy.Time.now(); time_sec = timestamp.to_sec() # get timestamp of this frame
 
             def publish_event():
-                rospy.loginfo(f'yolo_detector: event: presence changed to {self.presence_filtered}')
+                rospy.loginfo(f'apriltag_detector: event: presence changed to {self.presence_filtered}')
                 self.pub_event.publish(Event(
                     Header(
                         self.event_seq,
@@ -98,7 +99,7 @@ class AprilTagDetector:
                     cv2.line(img, ptC, ptD, (0, 255, 0), 2)
                     cv2.line(img, ptD, ptA, (0, 255, 0), 2)
                 
-                cv2.imshow('yolo_detector', img)
+                cv2.imshow('apriltag_detector', img)
                 if cv2.waitKey(1) == ord('q'): break
             
             self.frames += 1
