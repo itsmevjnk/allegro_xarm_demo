@@ -56,7 +56,7 @@
         <param name="END_EFFECTOR" value="$(arg END_EFFECTOR)"/>
     </node>
     
-    <include file="$(find yolo_detector)/launch/yolo.launch">
+    <include file="$(find yolo_detector)/launch/yolo.launch" if="$(arg RUN_DEMO)">
         <arg name="NAME" value="human_detector"/>
         <arg name="CAM_ID" value="$(arg HUMAN_CAM_ID)"/>
         <arg name="CLASSIFIERS" value="person"/>
@@ -68,7 +68,7 @@
         <arg name="BOUNDARY" value="$(arg HUMAN_BOUNDS)"/>
     </include>
 
-    <include file="$(find apriltag_detector)/launch/atag.launch">
+    <include file="$(find apriltag_detector)/launch/atag.launch" if="$(arg RUN_DEMO)">
         <arg name="NAME" value="object_detector"/>
         <arg name="CAM_ID" value="$(arg OBJECT_CAM_ID)"/>
         <arg name="ENTER_MIN" value="$(arg OBJECT_ENTER_MIN)"/>
@@ -80,7 +80,8 @@
         pkg="handover_demo"
         type="detector_merge.py"
         output="screen"
-        required="true"/>
+        required="true"
+        if="$(arg RUN_DEMO)"/>
     
     <node name="actuator"
         pkg="handover_demo"
@@ -96,6 +97,13 @@
         output="screen"
         required="true"
         if="$(arg HAND_YANK)"/>
+    
+    <node name="handover_teleop"
+        pkg="handover_demo"
+        type="teleop.py"
+        output="screen"
+        required="true"
+        unless="$(arg RUN_DEMO)"/>
     
     <include file="$(find handover_demo)/launch/controls.launch" if="$(arg CONTROLS)"/>
 </launch>

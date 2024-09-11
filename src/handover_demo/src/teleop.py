@@ -1,144 +1,74 @@
 #!/usr/bin/env python
 
 import rospy
+import rospkg
 
-from arm_controller.srv import *
-from arm_controller.msg import *
-from std_srvs.srv import *
+from std_srvs.srv import Trigger, TriggerResponse
 
-# getch implementation
-class _Getch:
-    """Gets a single character from standard input.  Does not echo to the
-screen."""
-    def __init__(self):
-        try:
-            self.impl = _GetchWindows()
-        except ImportError:
-            self.impl = _GetchUnix()
+# gamepad library
+import sys
+from pathlib import Path
+sys.path.insert(1, rospkg.RosPack().get_path('handover_demo') + '/scripts/Gamepad')
+import Gamepad
 
-    def __call__(self): return self.impl()
+# gamepad bindings
+GP_TYPE = Gamepad.PS4
+GP_BTN_HOME = 'CROSS'
+GP_BTN_HANDOVER = 'CIRCLE'
+GP_BTN_RELEASE = 'TRIANGLE'
+GP_BTN_EXIT = 'PS'
 
-class _GetchUnix:
-    def __init__(self):
-        import tty, sys
-
-    def __call__(self):
-        import sys, tty, termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
-    
-class _GetchWindows:
-    def __init__(self):
-        import msvcrt
-
-    def __call__(self):
-        import msvcrt
-        return msvcrt.getch()
-
-getch = _Getch()
-
-ARM_RETRACT = [-1.078160285949707, 0.7780254483222961, 0.35401591658592224, 1.198759913444519, 2.0698864459991455, 1.1360431909561157, 2.2165064811706543]
-ARM_EXTEND = [-1.6134812831878662, 0.6652030944824219, 0.21972931921482086, 1.4806538820266724, 3.1512298583984375, 1.1353720426559448, 2.2165064811706543]
-
-HAND_MONITOR_DELAY = 0.5
-HAND_DPOS_MAX = 0.05
-
-class HandoverDemo:
+class HandoverDemoControls:
     def __init__(self):
         rospy.loginfo('waiting for services')
-        rospy.wait_for_service('/arm/home')
-        rospy.wait_for_service('/arm/move_joint')
-        rospy.wait_for_service('/arm/intr_move')
-        rospy.wait_for_service('/hand/ready')
-        rospy.wait_for_service('/hand/envelop')
+        rospy.wait_for_service('/act/home')
+        rospy.wait_for_service('/act/handover')
+        rospy.wait_for_service('/act/release')
 
         rospy.loginfo('setting up service proxies')
-        self.spx_home = rospy.ServiceProxy('/arm/home', Trigger)
-        self.spx_move_joint = rospy.ServiceProxy('/arm/move_joint', MoveArmJoints)
-        self.spx_hand_release = rospy.ServiceProxy('/hand/ready', Trigger)
-        self.spx_hand_grasp = rospy.ServiceProxy('/hand/envelop', Trigger)
-        self.spx_interrupt_move = rospy.ServiceProxy('/arm/intr_move', Trigger)
+        self.do_home = rospy.ServiceProxy('/act/home', Trigger)
+        self.do_handover = rospy.ServiceProxy('/act/handover', Trigger)
+        self.do_release = rospy.ServiceProxy('/act/release', Trigger)
 
-        rospy.loginfo('subscribing to hand telemetry')
-        self.hand_min_pos = None # minimum hand position (for detecting yanking)
-        self.hand_last_pos = None # last hand position
-        self.hand_sub = rospy.Subscriber('/hand/status', HandStatus, self.hand_cb)
+        rospy.loginfo('waiting for gamepad connection')
+        rate = rospy.Rate(10)
+        while not Gamepad.available(): rate.sleep()
+        rospy.loginfo('gamepad connected')
 
-        rospy.loginfo('disabling arm service blocking')
-        rospy.ServiceProxy('/arm/set_blocking', arm_controller.srv.SetBool)(False)
-
-        rospy.loginfo('moving to initial position')
-        self.arm_home()
-        self.hand_release()
-
-        rospy.loginfo('available commands: H = go to home position, E = extend, R = retract, D = release bottle, G = grab bottle, Q = quit')
-        while not rospy.is_shutdown():
-            c = getch().lower()
-            if c == 'h':
-                self.arm_home()
-            elif c == 'e':
-                self.arm_extend()
-            elif c == 'r':
-                self.arm_retract()
-            elif c == 'd':
-                self.hand_release()
-            elif c == 'g':
-                self.hand_grasp()
-            elif c == 'q':
-                break
-
-    def arm_home(self):
-        rospy.loginfo('moving to home position')
-        self.spx_interrupt_move()
-        self.spx_home()
-
-    def arm_extend(self):
-        rospy.loginfo('extending arm')
-        self.spx_interrupt_move()
-        self.spx_move_joint(ARM_EXTEND)
-
-    def arm_retract(self):
-        rospy.loginfo('retracting arm')
-        self.spx_interrupt_move()
-        self.spx_move_joint(ARM_RETRACT)
+    def home_cb(self):
+        result = self.do_home().message
+        rospy.loginfo(result)
     
-    def hand_release(self):
-        rospy.loginfo('releasing bottle')
-        self.hand_min_pos = None
-        self.spx_hand_release()
-
-    def hand_start_monitor(self, event=None):
-        rospy.loginfo('enabling yank monitoring')
-        self.hand_min_pos = self.hand_last_pos
-
-    def hand_grasp(self):
-        rospy.loginfo('grabbing bottle')
-        self.spx_hand_grasp()
-        rospy.Timer(rospy.Duration(HAND_MONITOR_DELAY), self.hand_start_monitor, True)
-
-    def handcb(self, data):
-        pos = [data.pos[i] for i in [0, 4, 8]] # extract joints of interest
-        self.hand_last_pos = sum(pos) / len(pos) # NOTE: does Python have a built-in average function?
-        if self.hand_min_pos is not None:
-            # hand pose watch is active
-            if self.hand_last_pos < self.hand_min_pos:
-                self.hand_min_pos = self.hand_last_pos
-            elif self.hand_last_pos - self.hand_min_pos > HAND_DPOS_MAX:
-                self.yank_cb()
+    def handover_cb(self):
+        result = self.do_handover().message
+        rospy.loginfo(result)
     
-    def yank_cb(self):
-        rospy.loginfo('bottle yanking detected')
-        self.hand_release()
-        self.arm_retract()
+    def release_cb(self):
+        result = self.do_release().message
+        rospy.loginfo(result)
+
+    def run(self):
+        rospy.loginfo('initialising gamepad')
+        gp = GP_TYPE()
+        gp.startBackgroundUpdates()
+        gp.addButtonPressedHandler(GP_BTN_HOME, self.home_cb)
+        gp.addButtonPressedHandler(GP_BTN_HANDOVER, self.handover_cb)
+        gp.addButtonPressedHandler(GP_BTN_RELEASE, self.release_cb)
+
+        rospy.loginfo(f'controls: {GP_BTN_HOME} = home, {GP_BTN_HANDOVER} = handover, {GP_BTN_RELEASE} = release')
+        rospy.loginfo(f'press {GP_BTN_EXIT} to exit')
+
+        try:
+            while gp.isConnected():
+                if gp.isPressed(GP_BTN_EXIT):
+                    rospy.loginfo('exiting')
+                    break
+
+        finally:
+            gp.disconnect()
 
 if __name__ == '__main__':
-    rospy.init_node('handover_demo')
+    rospy.init_node('handover_controls')
 
-    HandoverDemo()
-    # rospy.spin()
+    HandoverDemoControls().run()
+    

@@ -229,15 +229,15 @@ class HandoverActuator:
     
     def home_cb(self, data):
         self.cmds.put(InternalCmd.HOME)
-        return TriggerResponse(True, '')
+        return TriggerResponse(True, 'going home')
     
     def handover_cb(self, data):
         self.cmds.put(InternalCmd.HANDOVER)
-        return TriggerResponse(True, '')
+        return TriggerResponse(True, ('picking up and ' if not self.holding_object else '') + 'handing over')
 
     def release_cb(self, data):
         self.cmds.put(InternalCmd.RELEASE)
-        return TriggerResponse(True, '')
+        return TriggerResponse(True, 'releasing object' if self.holding_object else 'no objects being held')
     
     def killsw_cb(self, data):
         self.kill = not self.kill
