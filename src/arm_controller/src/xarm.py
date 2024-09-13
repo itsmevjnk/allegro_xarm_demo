@@ -16,7 +16,7 @@ ARM_MOVE_MAXACC = 4000.0 # mm/s^2
 
 GRIP_SPEED = 3000
 GRIP_OPEN = 850
-GRIP_CLOSE = 100
+GRIP_CLOSE = 500
 
 class xArmController:
     def set_blocking(self, state):

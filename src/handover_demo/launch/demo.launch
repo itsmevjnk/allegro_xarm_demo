@@ -31,7 +31,7 @@
     <arg name="RUN_DEMO" default="true"/> <!-- disable to not run auto.py -->
 
     <arg name="HAND_YANK" default="false"/>
-    <arg name="CONTROLS" default="false"/>
+    <arg name="CONTROLS" default="true"/>
 
     <include file="$(find arm_controller)/launch/arm_bringup.launch">
         <arg name="HAND" value="$(arg HAND)"/>
@@ -43,8 +43,8 @@
         <arg name="HAND_PD" value="$(arg HAND_PD)"/>
         <arg name="ARM_IP" value="$(arg ARM_IP)"/>
         <arg name="ARM_REPORT_TYPE" value="$(arg ARM_REPORT_TYPE)"/>
-        <arg name="HAND_CTL" value="false" unless="$(eval arg('END_EFFECTOR') == 'hand')"/>
-        <arg name="GRIP_CTL" value="true" if="$(eval arg('END_EFFECTOR') == 'gripper')"/>
+        <arg name="HAND_CTL" value="false" unless="$(eval arg('END_EFFECTOR') == 'hand_cube' or arg('END_EFFECTOR') == 'hand_box')"/>
+        <arg name="GRIP_CTL" value="true" if="$(eval arg('END_EFFECTOR') == 'gripper_cube' or arg('END_EFFECTOR') == 'gripper_box')"/>
     </include>
 
     <node name="handover_demo"
