@@ -171,7 +171,7 @@ class HandoverActuator:
         # self.hand_min_pos = self.hand_last_pos
         self.holding_object = True
         self.ee_pub.publish(Bool(True))
-        self.step = Steps.HANDOVER_START + len(self.poses[self.pose]['handover']) - 1
+        self.step = Steps.HANDOVER_START
         self.step_first = True
         self.ee_closing = False
 
@@ -180,6 +180,7 @@ class HandoverActuator:
             # picking up
             n = self.step - Steps.PICKUP_START # sub-step
             if self.step_first:
+                rospy.loginfo(f'pickup step {n}')
                 self.step_first = False
                 self.move_arm(self.poses[self.pose]['pickup'][n])
             elif self.arm_state == ActuatorMode.IDLE:
@@ -198,6 +199,7 @@ class HandoverActuator:
             # performing handover
             n = self.step - Steps.HANDOVER_START # sub-step
             if self.step_first:
+                rospy.loginfo(f'handover step {n}')
                 self.step_first = False
                 self.move_arm(self.poses[self.pose]['handover'][n])
             elif self.arm_state == ActuatorMode.IDLE:
