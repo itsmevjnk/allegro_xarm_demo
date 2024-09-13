@@ -1,5 +1,5 @@
 <launch>
-    <arg name="END_EFFECTOR" default="gripper"/>
+    <arg name="END_EFFECTOR"/>
     
     <!-- Allegro Hand config -->
     <arg name="HAND" default="right"/>
@@ -15,7 +15,7 @@
     <arg name="ARM_REPORT_TYPE" default="normal"/>
 
     <!-- human detection config -->
-    <arg name="HUMAN_CAM_ID"/>
+    <arg name="HUMAN_CAM_ID" default="4"/>
     <arg name="HUMAN_CONF_THRESHOLD" default="0.71"/>
     <arg name="HUMAN_AREA_THRESHOLD" default="0.125"/>
     <arg name="HUMAN_ENTER_MIN" default="1.0"/>
@@ -23,7 +23,7 @@
     <arg name="HUMAN_BOUNDS" default="0.0,0.0,1.0,1.0"/>
 
     <!-- object detection config -->
-    <arg name="OBJECT_CAM_ID"/>
+    <arg name="OBJECT_CAM_ID" default="2"/>
     <arg name="OBJECT_ENTER_MIN" default="0.25"/>
     <arg name="OBJECT_EXIT_MAX" default="0.25"/>
 
