@@ -44,19 +44,31 @@ class HandoverDemo:
         rospy.loginfo('creating service for releasing')
         rospy.Service('/handover/release', Trigger, self.release_cb)
 
+        for i, pose in enumerate(self.poses):
+            rospy.loginfo(f'creating service for selecting handover mode {pose}')
+            rospy.Service(f'/handover/pose/{pose}', Trigger, lambda msg, pose_idx=i: self.set_mode(pose_idx))
+
         rospy.loginfo('moving to initial position')
         self.spx_home()
     
         rospy.spin()
     
+    def set_mode(self, idx):
+        self.mode = idx
+        mode = self.poses[self.mode]
+        rospy.loginfo(f'setting handover mode to {mode}')
+        self.pub_mode.publish(String(mode))
+        return TriggerResponse(True, f'setting handover mode to {mode}')
+
     def next_mode(self, new = True):
         # select random mode
         if self.mode is None or not new:
-            self.mode = random.choice(self.poses) # any random mode
+            self.mode = random.randint(0, len(self.poses) - 1) # any random mode
         else:
-            self.mode = random.choice([p for p in self.poses if p != self.mode])
-        rospy.loginfo(f'setting handover mode to {self.mode}')
-        self.pub_mode.publish(String(self.mode))
+            self.mode = (self.mode + 1) % len(self.poses)
+        mode = self.poses[self.mode]
+        rospy.loginfo(f'setting handover mode to {mode}')
+        self.pub_mode.publish(String(mode))
     
     def release_cb(self, data):
         rospy.loginfo('releasing object and going back home')
@@ -76,7 +88,7 @@ class HandoverDemo:
             self.handover = handover
 
             if handover: # start handover
-                self.next_mode()
+                # self.next_mode()
                 self.spx_handover()
                 # holding_object will be set upon completion of grasping
             else: # go back home
