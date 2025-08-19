@@ -12,7 +12,7 @@ import rospkg
 YOLO_MODEL=rospkg.RosPack().get_path('yolo_detector') + '/yolov8n.pt'
 
 class YOLODetector:
-    def __init__(self, namespace: str, cam_id: int, classifiers: 'list[str]', cam_resolution: 'str | None' = None, detect_bounds: 'list[float]' = [0,0,1,1], conf_thres: float = 0.6, area_thres: float = 0.0, enter_min: float = 1.0, exit_max: float = 0.5, show_cam: bool = False):
+    def __init__(self, namespace: str, cam_id: int, rotate: float, classifiers: 'list[str]', cam_resolution: 'str | None' = None, detect_bounds: 'list[float]' = [0,0,1,1], conf_thres: float = 0.6, area_thres: float = 0.0, enter_min: float = 1.0, exit_max: float = 0.5, show_cam: bool = False):
         self.cap = cv2.VideoCapture(cam_id) # start camera
         if cam_resolution is not None and len(cam_resolution) > 0: # set custom resolution
             cam_resolution = cam_resolution.split('x')
@@ -37,12 +37,15 @@ class YOLODetector:
         rospy.loginfo(f'yolo_detector: classifiers to look for: {self.classifiers}')
 
         # save other args
+        self.rotate = rotate
         self.conf_thres = conf_thres
         self.area_thres = area_thres
         self.enter_min = enter_min
         self.exit_max = exit_max
         self.show_cam = show_cam
         self.boundary = detect_bounds
+
+        rospy.loginfo(f'yolo_detector: rotation {rotate} deg')
 
         # start interface
         rospy.loginfo('yolo_detector: starting ROS interface')
@@ -67,7 +70,20 @@ class YOLODetector:
         xmin, ymin, xmax, ymax = self.boundary
         while not rospy.is_shutdown():
             ret, img = self.cap.read() # capture from camera  
-            height, width, _ = img.shape   
+            height, width, _ = img.shape
+
+            # apply rotation
+            x_c, y_c = width // 2, height // 2
+            M = cv2.getRotationMatrix2D((x_c, y_c), self.rotate, 1.0)
+            # https://stackoverflow.com/a/47248339 - get new image size
+            abs_cos, abs_sin = abs(M[0,0]), abs(M[0,1])
+            new_width = int(height * abs_sin + width * abs_cos)
+            new_height = int(height * abs_cos + width * abs_sin)
+            M[0,2] += new_width / 2 - x_c
+            M[1,2] += new_height / 2 - y_c
+            img = cv2.warpAffine(img, M, (new_width, new_height))
+            width, height = new_width, new_height
+
             frame_area = width * height
 
             results = self.model(img, stream=True, verbose=False) # run model on this frame
@@ -146,6 +162,7 @@ if __name__ == '__main__':
     YOLODetector(
         node_name,
         int(rospy.get_param(f'{node_name}/CAM_ID', default=0)),
+        float(rospy.get_param(f'{node_name}/ROTATE', default=0)),
         str(rospy.get_param(f'{node_name}/CLASSIFIERS')).split(','),
         str(rospy.get_param(f'{node_name}/CAM_RESOLUTION', default=None)),
         [float(x) for x in str(rospy.get_param(f'{node_name}/BOUNDARY')).split(',')],

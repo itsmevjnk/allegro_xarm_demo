@@ -1,6 +1,7 @@
 <launch>
     <arg name="CAM_ID" default="0"/>
     <arg name="CAM_RESOLUTION" default=""/>
+    <arg name="ROTATE" default="0.0"/>
     <arg name="CLASSIFIERS"/>
     <arg name="CONF_THRESHOLD" default="0.71"/>
     <arg name="AREA_THRESHOLD" default="0.0"/>
@@ -17,6 +18,7 @@
         output="screen"
         required="$(arg REQUIRED)">
         <param name="CAM_ID" value="$(arg CAM_ID)"/>
+        <param name="ROTATE" value="$(arg ROTATE)"/>
         <param name="CAM_RESOLUTION" value="$(arg CAM_RESOLUTION)"/>
         <param name="CLASSIFIERS" value="$(arg CLASSIFIERS)"/>
         <param name="CONF_THRESHOLD" value="$(arg CONF_THRESHOLD)"/>
