@@ -76,7 +76,7 @@ class HandoverActuator:
         self.hand_cmd = {p: rospy.ServiceProxy(services[p], Trigger) for p in services}
 
         rospy.loginfo('creating handover mode topic')
-        self.pose = 'over' # TODO: add more handover poses
+        self.pose = 'side' # TODO: add more handover poses
         rospy.Subscriber('/act/mode', String, self.mode_cb)
 
         #rospy.loginfo('creating publisher for direct hand commands')

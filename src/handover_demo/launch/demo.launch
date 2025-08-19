@@ -2,7 +2,7 @@
     <!-- Allegro Hand config -->
     <arg name="HAND" default="right"/>
     <arg name="HAND_AUTO_CAN" default="true"/>
-    <arg name="HAND_CAN_DEVICE" default="/dev/pcanusb1"/>
+    <arg name="HAND_CAN_DEVICE" default="/dev/pcanusb32"/>
     <arg name="HAND_PARAMS_DIR" default="$(find allegro_hand_parameters)"/>
     <arg name="HAND_ZEROS" default="$(arg HAND_PARAMS_DIR)/zero.yaml"/>
     <arg name="HAND_CAN_POLLING" default="true"/>

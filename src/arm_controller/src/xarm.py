@@ -8,7 +8,7 @@ from std_srvs.srv import Trigger, TriggerResponse
 from arm_controller.srv import *
 from arm_controller.msg import *
 
-ARM_HOME = [-1.5707963705062866, -0.6283185482025146, 0.0, 0.0, 3.1415927410125732, 0.9599310755729675, 1.8168877363204956] # initial arm joint angles
+ARM_HOME = [0.12056513875722885, -0.46140798926353455, -0.1654359996318817, 0.08559804409742355, 3.1224524974823, 1.060968279838562, 4.96254301071167] # initial arm joint angles
 ARM_JOINT_MAXVEL = 0.4 # rad/s
 ARM_JOINT_MAXACC = 7.5 # rad/s^2
 ARM_MOVE_MAXVEL = 400.0 # mm/s
